@@ -6,6 +6,7 @@
 <title>Sordos Argentinos — Prototipo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --ink:#eafcff; --ink-muted:#9d8bd6;
@@ -439,6 +440,43 @@
 </div>
 
 <script>
+  // ===== CONEXIÓN REAL A SUPABASE =====
+  const SUPABASE_URL = 'https://slidcibxmsfhssbdihou.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentUser = null;
+  let currentProfile = null;
+
+  async function initApp(){
+    const { data: { session } } = await sb.auth.getSession();
+
+    if (!session){
+      // No hay nadie logueado, mandar al login
+      window.location.href = 'index.html';
+      return;
+    }
+
+    currentUser = session.user;
+
+    // Traer el perfil real del usuario logueado
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    currentProfile = profile;
+
+    if (profile){
+      // Reflejar el nombre real en la pantalla de perfil
+      const profileNameEl = document.getElementById('profileName');
+      if (profileNameEl) profileNameEl.textContent = profile.name || 'Usuario';
+    }
+  }
+
+  initApp();
+
+  async function cerrarSesion(){
+    await sb.auth.signOut();
+    window.location.href = 'index.html';
+  }
+
   const contacts = [
     {name:'Melina G.', sub:'Dale, te llamo en 5 min 🙌', time:'14:32', verified:true},
     {name:'Sole L.', sub:'Nos vemos en la juntada del sábado', time:'Ayer', verified:true},
@@ -520,7 +558,7 @@
           <div class="settings-row" onclick="goTo('voz')" style="cursor:pointer;"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 003-3V6a3 3 0 00-6 0v6a3 3 0 003 3z" stroke="#c6ff3d" stroke-width="1.6"/></svg><span class="settings-text">Voz a texto</span></div>
         </div>
         <div class="settings-group">
-          <div class="settings-row"><svg viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="#ff3b3b" stroke-width="1.6"/></svg><span class="settings-text" style="color:#ff3b3b;">Cerrar sesión</span></div>
+          <div class="settings-row" onclick="cerrarSesion()" style="cursor:pointer;"><svg viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="#ff3b3b" stroke-width="1.6"/></svg><span class="settings-text" style="color:#ff3b3b;">Cerrar sesión</span></div>
         </div>`;
     }
   }
