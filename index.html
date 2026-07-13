@@ -222,6 +222,11 @@
 
     <div class="msg" id="msgBox"></div>
 
+    <label style="position:relative; z-index:2; display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-muted); cursor:pointer;">
+      <input type="checkbox" id="rememberMe" checked style="width:16px; height:16px; accent-color:var(--pink); cursor:pointer;">
+      Recordarme en este dispositivo
+    </label>
+
     <button class="btn-primary" id="submitBtn" onclick="submitForm()">
       <span class="spinner" id="spinner"></span>
       <span id="submitLabel">Iniciar sesión</span>
@@ -239,7 +244,13 @@
   // ===== CONEXIÓN REAL A SUPABASE =====
   const SUPABASE_URL = 'https://slidcibxmsfhssbdihou.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI';
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Si "Recordarme" está tildado, la sesión se guarda de forma permanente (localStorage).
+  // Si no, se borra al cerrar el navegador (sessionStorage).
+  const wantsRemember = localStorage.getItem('sa_remember') !== 'false';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { storage: wantsRemember ? window.localStorage : window.sessionStorage, persistSession: true }
+  });
 
   let mode = 'login';
 
@@ -282,6 +293,7 @@
 
     hideMsg();
     setLoading(true);
+    localStorage.setItem('sa_remember', document.getElementById('rememberMe').checked ? 'true' : 'false');
 
     if (mode === 'signup'){
       const { data, error } = await sb.auth.signUp({ email, password });
@@ -305,8 +317,7 @@
         });
       }
 
-      showMsg('¡Cuenta creada! Entrando...', 'ok');
-      setTimeout(() => { window.location.href = 'app.html'; }, 1200);
+      window.location.href = 'app.html';
     } else {
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
       setLoading(false);
@@ -316,9 +327,7 @@
         return;
       }
 
-      showMsg('¡Sesión iniciada! Entrando...', 'ok');
-      console.log('Usuario logueado:', data.user);
-      setTimeout(() => { window.location.href = 'app.html'; }, 900);
+      window.location.href = 'app.html';
     }
   }
 
@@ -335,7 +344,16 @@
       text.textContent = 'No se pudo conectar: ' + e.message;
     }
   }
-  checkConnection();
+
+  async function checkExistingSession(){
+    const { data: { session } } = await sb.auth.getSession();
+    if (session){
+      window.location.href = 'app.html';
+    } else {
+      checkConnection();
+    }
+  }
+  checkExistingSession();
 </script>
 
 </body>
