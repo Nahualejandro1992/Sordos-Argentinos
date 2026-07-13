@@ -147,7 +147,7 @@
   // ===== CONEXIÓN REAL A SUPABASE =====
   const SUPABASE_URL = 'https://slidcibxmsfhssbdihou.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let mode = 'login';
 
@@ -186,7 +186,7 @@
     setLoading(true);
 
     if (mode === 'signup'){
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await sb.auth.signUp({ email, password });
       setLoading(false);
 
       if (error){
@@ -195,7 +195,7 @@
       }
 
       if (data.user){
-        await supabase.from('profiles').insert({
+        await sb.from('profiles').insert({
           id: data.user.id,
           phone: '',
           name: email.split('@')[0],
@@ -205,7 +205,7 @@
 
       showMsg('¡Cuenta creada! Revisá tu email para confirmar.', 'ok');
     } else {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
       setLoading(false);
 
       if (error){
@@ -222,7 +222,7 @@
     const dot = document.getElementById('connDot');
     const text = document.getElementById('connText');
     try {
-      const { error } = await supabase.from('profiles').select('id').limit(1);
+      const { error } = await sb.from('profiles').select('id').limit(1);
       if (error) throw error;
       dot.classList.remove('off');
       text.textContent = 'Conectado a Supabase — proyecto Sordos Argentinos';
