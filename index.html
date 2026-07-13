@@ -120,8 +120,8 @@
 
   <div class="card">
     <div class="field">
-      <span class="field-label">Tu email</span>
-      <input type="email" id="emailInput" placeholder="tuemail@ejemplo.com">
+      <span class="field-label">Tu apodo</span>
+      <input type="text" id="emailInput" placeholder="Ej: turro86" autocapitalize="none">
     </div>
     <div class="field">
       <span class="field-label">Contraseña</span>
@@ -138,7 +138,7 @@
 
   <div class="free-note">
     <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.6"/></svg>
-    Conectado en vivo a tu proyecto real de Supabase.
+    Sin email, sin SMS — solo tu apodo y contraseña. 100% gratis.
   </div>
 
 </div>
@@ -174,13 +174,19 @@
   }
 
   async function submitForm(){
-    const email = document.getElementById('emailInput').value.trim();
+    const nickname = document.getElementById('emailInput').value.trim().toLowerCase().replace(/[^a-z0-9_.]/g, '');
     const password = document.getElementById('passInput').value;
 
-    if (!email || !password){
-      showMsg('Completá email y contraseña', 'err');
+    if (!nickname || !password){
+      showMsg('Completá tu apodo y contraseña', 'err');
       return;
     }
+    if (nickname.length < 3){
+      showMsg('El apodo tiene que tener al menos 3 letras', 'err');
+      return;
+    }
+
+    const email = nickname + '@sordosargentinos.app';
 
     hideMsg();
     setLoading(true);
@@ -190,7 +196,11 @@
       setLoading(false);
 
       if (error){
-        showMsg('Error: ' + error.message, 'err');
+        if (error.message.includes('already registered')){
+          showMsg('Ese apodo ya está en uso, probá otro', 'err');
+        } else {
+          showMsg('Error: ' + error.message, 'err');
+        }
         return;
       }
 
@@ -198,18 +208,18 @@
         await sb.from('profiles').insert({
           id: data.user.id,
           phone: '',
-          name: email.split('@')[0],
+          name: nickname,
           status: 'pending'
         });
       }
 
-      showMsg('¡Cuenta creada! Revisá tu email para confirmar.', 'ok');
+      showMsg('¡Cuenta creada! Ya podés iniciar sesión.', 'ok');
     } else {
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
       setLoading(false);
 
       if (error){
-        showMsg('Email o contraseña incorrectos', 'err');
+        showMsg('Apodo o contraseña incorrectos', 'err');
         return;
       }
 
