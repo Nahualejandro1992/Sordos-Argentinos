@@ -482,6 +482,44 @@
     </div>
   </div>
 
+  <!-- IDIOMA -->
+  <div class="screen" id="screen-idioma">
+    <div class="chat-header">
+      <button class="back-btn" onclick="goTo('home')"><svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="chat-name">Idioma</div>
+    </div>
+    <div class="settings-group" style="margin:14px 16px;">
+      <div class="settings-row" onclick="setIdioma('es')" id="idioma-es" style="cursor:pointer;"><span class="settings-text">Español</span></div>
+      <div class="settings-row" onclick="setIdioma('en')" id="idioma-en" style="cursor:pointer;"><span class="settings-text">English</span></div>
+    </div>
+  </div>
+
+  <!-- TAMAÑO DE TEXTO -->
+  <div class="screen" id="screen-tamano">
+    <div class="chat-header">
+      <button class="back-btn" onclick="goTo('home')"><svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="chat-name">Tamaño de texto</div>
+    </div>
+    <div style="padding:24px;">
+      <div style="text-align:center; font-size:16px; margin-bottom:20px; padding:20px; background:#000; border:1px solid rgba(255,255,255,0.15); border-radius:14px;" id="tamanoPreview">Así se va a ver el texto en toda la app</div>
+      <input type="range" min="90" max="130" value="100" id="tamanoSlider" style="width:100%; accent-color:var(--pink);" oninput="previewTamano(this.value)" onchange="setTamano(this.value)">
+      <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--ink-muted); margin-top:6px;"><span>Más chico</span><span>Más grande</span></div>
+    </div>
+  </div>
+
+  <!-- PRIVACIDAD -->
+  <div class="screen" id="screen-privacidad">
+    <div class="chat-header">
+      <button class="back-btn" onclick="goTo('home')"><svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="chat-name">Privacidad y seguridad</div>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding:14px 16px;">
+      <div class="section-label">Personas bloqueadas</div>
+      <div id="bloqueadosList"><div style="text-align:center; color:var(--ink-muted); font-size:12px; padding:20px;">Cargando...</div></div>
+    </div>
+  </div>
+
+
   <!-- ADMIN -->
   <div class="screen" id="screen-admin">
     <div class="chat-header">
@@ -837,6 +875,75 @@
         duration_seconds: lastCallSeconds
       });
     } catch(e){ console.error('No se pudo registrar la llamada', e); }
+  }
+
+  // ===== IDIOMA (real, guardado en el dispositivo) =====
+  function setIdioma(code){
+    localStorage.setItem('sa_idioma', code);
+    applyIdioma();
+    goTo('home');
+  }
+  function applyIdioma(){
+    const code = localStorage.getItem('sa_idioma') || 'es';
+    document.getElementById('idioma-es')?.classList.toggle('active', code === 'es');
+    document.getElementById('idioma-en')?.classList.toggle('active', code === 'en');
+    const label = document.getElementById('idiomaLabel');
+    if (label) label.textContent = 'Idioma — ' + (code === 'es' ? 'Español' : 'English');
+  }
+  applyIdioma();
+
+  // ===== TAMAÑO DE TEXTO (real, aplicado a toda la app) =====
+  function previewTamano(val){
+    document.getElementById('tamanoPreview').style.fontSize = (val/100*16) + 'px';
+  }
+  function setTamano(val){
+    localStorage.setItem('sa_tamano', val);
+    document.documentElement.style.fontSize = (val/100*100) + '%';
+  }
+  function applyTamanoGuardado(){
+    const val = localStorage.getItem('sa_tamano') || '100';
+    document.documentElement.style.fontSize = (val/100*100) + '%';
+    const slider = document.getElementById('tamanoSlider');
+    if (slider) slider.value = val;
+  }
+  applyTamanoGuardado();
+
+  // ===== PRIVACIDAD: lista real de bloqueados =====
+  async function openPrivacidad(){
+    goTo('privacidad');
+    const el = document.getElementById('bloqueadosList');
+    el.innerHTML = `<div style="text-align:center; color:var(--ink-muted); font-size:12px; padding:20px;">Cargando...</div>`;
+
+    const { data, error } = await sb
+      .from('contacts')
+      .select('id, contact_id, profiles:contact_id(name)')
+      .eq('user_id', currentUser.id)
+      .eq('status', 'blocked');
+
+    if (error){
+      el.innerHTML = `<div style="text-align:center; color:var(--danger); font-size:12px; padding:20px;">Error cargando bloqueados</div>`;
+      return;
+    }
+
+    if (!data || data.length === 0){
+      el.innerHTML = `<div style="text-align:center; color:var(--ink-muted); font-size:12px; padding:20px;">No bloqueaste a nadie.</div>`;
+      return;
+    }
+
+    el.innerHTML = data.map(r => `
+      <div class="contact-row" id="blocked-${r.id}">
+        <div class="c-avatar-wrap"><div class="c-avatar"></div></div>
+        <div class="c-info"><div class="c-name">${escapeHtml(r.profiles?.name || 'Usuario')}</div><div class="c-sub">Bloqueado</div></div>
+        <button class="admin-btn approve" style="width:auto; padding:6px 10px;" onclick="unblockContact('${r.id}')">Desbloquear</button>
+      </div>`).join('');
+  }
+
+  async function unblockContact(rowId){
+    const { error } = await sb.from('contacts').delete().eq('id', rowId);
+    if (error){ alert('Error: ' + error.message); return; }
+    const row = document.getElementById('blocked-' + rowId);
+    if (row) row.remove();
+    await loadRealContacts();
   }
 
   function openEditProfile(){
@@ -1195,8 +1302,9 @@
         </div>
         <div class="settings-group">
           <div class="settings-row" onclick="openAdminReal()" style="cursor:pointer;"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l7 4v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-4z" stroke="#ffb020" stroke-width="1.6"/></svg><span class="settings-text">Panel de admin</span></div>
-          <div class="settings-row"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2" stroke="#9d8bd6" stroke-width="1.6"/><path d="M8 10V7a4 4 0 018 0v3" stroke="#9d8bd6" stroke-width="1.6"/></svg><span class="settings-text">Privacidad y seguridad</span></div>
-          <div class="settings-row"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#9d8bd6" stroke-width="1.6"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18" stroke="#9d8bd6" stroke-width="1.6"/></svg><span class="settings-text">Idioma — Español</span></div>
+          <div class="settings-row" onclick="openPrivacidad()" style="cursor:pointer;"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2" stroke="#9d8bd6" stroke-width="1.6"/><path d="M8 10V7a4 4 0 018 0v3" stroke="#9d8bd6" stroke-width="1.6"/></svg><span class="settings-text">Privacidad y seguridad</span></div>
+          <div class="settings-row" onclick="goTo('idioma')" style="cursor:pointer;"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#9d8bd6" stroke-width="1.6"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18" stroke="#9d8bd6" stroke-width="1.6"/></svg><span class="settings-text" id="idiomaLabel">Idioma — Español</span></div>
+          <div class="settings-row" onclick="goTo('tamano')" style="cursor:pointer;"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V4M4 4h6M4 20h6M14 20l4-14 4 14M15.5 15h5" stroke="#9d8bd6" stroke-width="1.6"/></svg><span class="settings-text">Tamaño de texto</span></div>
         </div>
         <div class="settings-group">
           <div class="settings-row" onclick="cerrarSesion()" style="cursor:pointer;"><svg viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="#ff3b3b" stroke-width="1.6"/></svg><span class="settings-text" style="color:#ff3b3b;">Cerrar sesión</span></div>
@@ -1581,6 +1689,9 @@
       else if (active === 'screen-tema') goTo('home');
       else if (active === 'screen-voz') goTo('home');
       else if (active === 'screen-admin') goTo('home');
+      else if (active === 'screen-idioma') goTo('home');
+      else if (active === 'screen-tamano') goTo('home');
+      else if (active === 'screen-privacidad') goTo('home');
       else if (active === 'screen-notif') goTo('home');
       else if (active === 'screen-incoming') goTo('home');
       else if (active === 'screen-editprofile') goTo('profile');
