@@ -344,14 +344,10 @@
     <div class="chat-header">
       <button class="back-btn" onclick="goTo('home')"><svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="chat-avatar" onclick="goTo('profile')" style="cursor:pointer;"></div>
-      <div class="chat-name" onclick="goTo('profile')" style="cursor:pointer;" id="chatName">Melina G.</div>
+      <div class="chat-name" onclick="goTo('profile')" style="cursor:pointer;" id="chatName">Cargando...</div>
       <button class="back-btn" style="margin-left:auto;" onclick="startRealCall()"><svg viewBox="0 0 24 24" fill="none"><path d="M15 10l5-3v10l-5-3M4 6h9a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z" stroke="#ff00ff" stroke-width="1.8"/></svg></button>
     </div>
-    <div class="messages">
-      <div class="bubble them">Hola! ¿Vas a la juntada del sábado?</div>
-      <div class="bubble me">Sí, ahí voy a estar 🙌</div>
-      <div class="bubble them">Dale, te llamo en 5 min</div>
-    </div>
+    <div class="messages"></div>
     <div class="input-row">
       <input type="file" id="attachInput" accept="image/*" style="display:none;" onchange="sendAttachment(this.files[0])">
       <button class="send-btn" style="border-color:var(--pink); box-shadow:0 0 10px rgba(255,0,255,0.4);" onclick="document.getElementById('attachInput').click()"><svg viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a5 5 0 01-7.07-7.07l9.19-9.19a3.5 3.5 0 014.95 4.95l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="#ff00ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -368,14 +364,14 @@
     </div>
     <div style="flex:1; display:flex; flex-direction:column; align-items:center; padding:26px 24px; overflow-y:auto;">
       <div style="width:96px; height:96px; border-radius:50%; background:#000; border:2px solid var(--pink); box-shadow:0 0 20px var(--pink); margin-bottom:14px;"></div>
-      <div style="font-family:'Space Grotesk'; font-size:19px; font-weight:700; color:#fff;" id="profileName">Melina G.</div>
+      <div style="font-family:'Space Grotesk'; font-size:19px; font-weight:700; color:#fff;" id="profileName">Cargando...</div>
       <div style="font-family:'JetBrains Mono'; font-size:10px; color:var(--cyan); margin-top:8px;">✓ Perfil verificado</div>
       <div style="font-size:12.5px; color:var(--ink-muted); margin-top:6px;">Palermo, Buenos Aires</div>
       <div style="display:flex; gap:10px; width:100%; margin-top:24px;">
         <button class="btn-primary" style="border-color:var(--pink); color:var(--pink);" onclick="startRealCall()">Videollamada</button>
         <button class="btn-primary" style="border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 14px rgba(0,255,255,0.35);" onclick="goTo('chat')">Chatear</button>
       </div>
-      <button class="btn-primary" style="margin-top:10px; border-color:rgba(255,255,255,0.25); color:var(--ink-muted); box-shadow:none;" onclick="goTo('editprofile')">Editar perfil</button>
+      <button class="btn-primary" style="margin-top:10px; border-color:rgba(255,255,255,0.25); color:var(--ink-muted); box-shadow:none;" onclick="openEditProfile()">Editar perfil</button>
       <button class="btn-primary" style="margin-top:10px; border-color:var(--danger); color:var(--danger); box-shadow:none;" onclick="blockCurrentContact()">Bloquear / Reportar</button>
     </div>
   </div>
@@ -444,17 +440,8 @@
       <button class="back-btn" onclick="goTo('home')"><svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="chat-name">Solicitudes</div>
     </div>
-    <div style="flex:1; overflow-y:auto; padding:12px 16px;">
-      <div style="background:#000; border:1.5px solid var(--pink); border-radius:16px; padding:14px; margin-bottom:12px;">
-        <div style="display:flex; gap:12px; align-items:center;">
-          <div class="c-avatar"></div>
-          <div><div class="c-name">Ceci M.</div><div class="c-sub">3 contactos en común</div></div>
-        </div>
-        <div style="display:flex; gap:8px; margin-top:12px;">
-          <button class="btn-primary" style="border-color:var(--lime); color:var(--lime); box-shadow:0 0 10px rgba(198,255,61,0.3); padding:9px;" onclick="acceptRequest(this)">Aceptar</button>
-          <button class="btn-primary" style="border-color:var(--danger); color:var(--danger); box-shadow:none; padding:9px;" onclick="this.closest('div[style*=border-radius]').remove()">Rechazar</button>
-        </div>
-      </div>
+    <div style="flex:1; overflow-y:auto; padding:12px 16px;" id="solicitudesList">
+      <div style="text-align:center; color:var(--ink-muted); font-size:12px; padding:20px;">Cargando...</div>
     </div>
   </div>
 
@@ -511,10 +498,8 @@
       <button class="back-btn" onclick="goTo('home')"><svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="chat-name">Notificaciones</div>
     </div>
-    <div style="flex:1; overflow-y:auto; padding:12px 16px;">
-      <div class="contact-row"><div class="c-avatar-wrap" style="width:36px;height:36px;"><div style="width:36px;height:36px;border-radius:50%;background:#000;border:1.5px solid var(--lime);display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#c6ff3d" stroke-width="2.4"/></svg></div></div><div class="c-info"><div class="c-name">¡Tu perfil fue aprobado!</div><div class="c-sub">Ya sos parte de la comunidad</div></div></div>
-      <div class="contact-row"><div class="c-avatar-wrap"><div class="c-avatar"></div></div><div class="c-info"><div class="c-name">Melina G.</div><div class="c-sub">Dale, te llamo en 5 min 🙌</div></div></div>
-      <div class="contact-row" onclick="incomingCall()" style="cursor:pointer;"><div class="c-avatar-wrap"><div class="c-avatar"></div></div><div class="c-info"><div class="c-name" style="color:var(--danger);">Llamada perdida — Sole L.</div><div class="c-sub">Tocá para devolver</div></div></div>
+    <div style="flex:1; overflow-y:auto; padding:12px 16px;" id="notifList">
+      <div style="text-align:center; color:var(--ink-muted); font-size:12px; padding:30px;">Cargando notificaciones...</div>
     </div>
   </div>
 
@@ -538,10 +523,10 @@
     <div style="flex:1; padding:20px 22px; overflow-y:auto;">
       <div style="width:90px; height:90px; border-radius:50%; background:#000; border:2px solid var(--pink); box-shadow:0 0 18px var(--pink); margin:0 auto 20px;"></div>
       <div style="font-size:11.5px; color:var(--ink-muted); margin-bottom:6px;">Nombre</div>
-      <input type="text" value="Melina G." style="width:100%; background:#000; border:1px solid rgba(255,255,255,0.2); border-radius:12px; padding:12px 14px; color:var(--ink); font-size:14px; margin-bottom:16px;" oninput="document.getElementById('profileName').textContent=this.value">
+      <input type="text" id="editNameInput" style="width:100%; background:#000; border:1px solid rgba(255,255,255,0.2); border-radius:12px; padding:12px 14px; color:var(--ink); font-size:16px; margin-bottom:16px;">
       <div style="font-size:11.5px; color:var(--ink-muted); margin-bottom:6px;">Bio</div>
-      <textarea style="width:100%; height:70px; background:#000; border:1px solid rgba(255,255,255,0.2); border-radius:12px; padding:12px 14px; color:var(--ink); font-size:14px; resize:none;">Diseñadora gráfica, fanática del mate 🙌</textarea>
-      <button class="btn-primary" style="margin-top:20px; border-color:var(--cyan); color:var(--cyan);" onclick="goTo('profile')">Guardar</button>
+      <textarea id="editBioInput" style="width:100%; height:70px; background:#000; border:1px solid rgba(255,255,255,0.2); border-radius:12px; padding:12px 14px; color:var(--ink); font-size:16px; resize:none;"></textarea>
+      <button class="btn-primary" style="margin-top:20px; border-color:var(--cyan); color:var(--cyan);" onclick="saveProfileReal()">Guardar</button>
     </div>
   </div>
   <div class="drop-toast" id="dropToast"></div>
@@ -582,6 +567,8 @@
 
     await loadRealContacts();
     subscribeToIncomingCalls();
+    subscribeToNotifications();
+    subscribeToNewStatuses();
     goTo('home');
   }
 
@@ -717,6 +704,16 @@
         try { await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); } catch(e){}
       }
     } else if (type === 'hangup'){
+      const wasIncoming = document.querySelector('.screen.active').id === 'screen-incoming';
+      if (wasIncoming){
+        await sb.from('calls').insert({ caller_id: from, receiver_id: currentUser.id, status: 'missed', duration_seconds: 0 });
+        await sb.from('notifications').insert({
+          user_id: currentUser.id,
+          type: 'call_missed',
+          title: `Llamada perdida — ${fromName}`,
+          body: 'Tocá para devolver'
+        });
+      }
       endCallCleanup();
       if (document.querySelector('.screen.active').id === 'screen-videocall' || document.querySelector('.screen.active').id === 'screen-incoming'){
         goTo('home');
@@ -840,6 +837,27 @@
         duration_seconds: lastCallSeconds
       });
     } catch(e){ console.error('No se pudo registrar la llamada', e); }
+  }
+
+  function openEditProfile(){
+    document.getElementById('editNameInput').value = currentProfile?.name || '';
+    document.getElementById('editBioInput').value = currentProfile?.bio || '';
+    goTo('editprofile');
+  }
+
+  async function saveProfileReal(){
+    const name = document.getElementById('editNameInput').value.trim();
+    const bio = document.getElementById('editBioInput').value.trim();
+
+    if (!name){ alert('El nombre no puede estar vacío'); return; }
+
+    const { error } = await sb.from('profiles').update({ name, bio }).eq('id', currentUser.id);
+    if (error){ alert('No se pudo guardar: ' + error.message); return; }
+
+    currentProfile.name = name;
+    currentProfile.bio = bio;
+    document.getElementById('profileName').textContent = name;
+    goTo('profile');
   }
 
   async function blockCurrentContact(){
@@ -1053,6 +1071,14 @@
   async function approveProfile(id){
     const { error } = await sb.from('profiles').update({ status: 'verified' }).eq('id', id);
     if (error){ alert('Error: ' + error.message); return; }
+
+    await sb.from('notifications').insert({
+      user_id: id,
+      type: 'profile_approved',
+      title: '¡Tu perfil fue aprobado!',
+      body: 'Ya sos parte de la comunidad'
+    });
+
     const card = document.getElementById('admin-' + id);
     if (card) card.remove();
     await loadRealContacts();
@@ -1149,7 +1175,7 @@
         </div>`).join('');
     } else if (tab === 'contacts'){
       titleEl.textContent = 'Contactos';
-      iconEl.innerHTML = `<button class="back-btn" onclick="goTo('solicitudes')"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="3" stroke="#ffb020" stroke-width="1.6"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6" stroke="#ffb020" stroke-width="1.6"/><path d="M18 8v6M15 11h6" stroke="#ffb020" stroke-width="1.6"/></svg></button>`;
+      iconEl.innerHTML = `<button class="back-btn" onclick="openSolicitudes()"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="3" stroke="#ffb020" stroke-width="1.6"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6" stroke="#ffb020" stroke-width="1.6"/><path d="M18 8v6M15 11h6" stroke="#ffb020" stroke-width="1.6"/></svg></button>`;
       el.innerHTML = '<div class="section-label">En línea</div>' + contacts.map((c,i) => `
         <div class="contact-row" onclick="openChatReal(contacts[${i}].id)">
           <div class="c-avatar-wrap"><div class="c-avatar"></div>${avatarBadge()}</div>
@@ -1181,9 +1207,44 @@
   let hasUnreadNotif = false;
   let hasNewEstado = false;
 
-  function openNotif(){
+  async function openNotif(){
     hasUnreadNotif = false;
     goTo('notif');
+
+    const el = document.getElementById('notifList');
+    const { data, error } = await sb
+      .from('notifications')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false })
+      .limit(40);
+
+    if (error){
+      el.innerHTML = `<div style="text-align:center; color:var(--danger); font-size:12px; padding:30px;">Error cargando notificaciones</div>`;
+      return;
+    }
+
+    if (!data || data.length === 0){
+      el.innerHTML = `<div style="text-align:center; color:var(--ink-muted); font-size:12px; padding:30px;">No tenés notificaciones todavía.</div>`;
+      return;
+    }
+
+    const iconFor = (type) => {
+      if (type === 'profile_approved') return `<div style="width:36px;height:36px;border-radius:50%;background:#000;border:1.5px solid var(--lime);display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#c6ff3d" stroke-width="2.4"/></svg></div>`;
+      if (type === 'call_missed') return `<div class="c-avatar" style="width:36px;height:36px;border-color:var(--danger);"></div>`;
+      return `<div class="c-avatar" style="width:36px;height:36px;"></div>`;
+    };
+
+    el.innerHTML = data.map(n => `
+      <div class="contact-row" style="${!n.read ? 'background:rgba(255,0,255,0.05); border-radius:12px;' : ''}">
+        <div class="c-avatar-wrap" style="width:36px;height:36px;">${iconFor(n.type)}</div>
+        <div class="c-info">
+          <div class="c-name" style="${n.type === 'call_missed' ? 'color:var(--danger);' : ''}">${escapeHtml(n.title)}</div>
+          <div class="c-sub">${escapeHtml(n.body || '')}</div>
+        </div>
+      </div>`).join('');
+
+    await sb.from('notifications').update({ read: true }).eq('user_id', currentUser.id).eq('read', false);
   }
 
   function openEstados(){
@@ -1192,14 +1253,30 @@
     goTo('estados');
   }
 
-  const misEstados = [];
-  const estadosAjenos = [
-    {name:'Melina G.', time:'Hace 12 min', bg:'linear-gradient(135deg,#ff00ff,#7b3ff2)', text:'Un mate y a full con la juntada del sábado ☀️'},
-    {name:'Sole L.', time:'Hace 1 hora', bg:'linear-gradient(135deg,#00ffff,#0d5ba8)', text:'Nuevo día, nuevas señas 🤟'}
-  ];
+  let misEstados = [];
+  let estadosAjenos = [];
 
-  function renderEstadosList(){
+  async function renderEstadosList(){
     const el = document.getElementById('estadosList');
+    el.innerHTML = `<div style="text-align:center; color:var(--ink-muted); font-size:12px; padding:20px;">Cargando estados...</div>`;
+
+    const { data, error } = await sb
+      .from('statuses')
+      .select('*, profiles:user_id(name)')
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error){
+      el.innerHTML = `<div style="text-align:center; color:var(--danger); font-size:12px; padding:20px;">Error cargando estados</div>`;
+      return;
+    }
+
+    misEstados = (data || []).filter(s => s.user_id === currentUser.id)
+      .map(s => ({ id:s.id, time: timeAgo(s.created_at), bg: s.background_color, text: s.content }));
+
+    estadosAjenos = (data || []).filter(s => s.user_id !== currentUser.id)
+      .map(s => ({ id:s.id, name: s.profiles?.name || 'Alguien', time: timeAgo(s.created_at), bg: s.background_color, text: s.content }));
+
     const miEstadoHTML = misEstados.length
       ? `<div class="contact-row" onclick="verEstado('mio', 0)">
           <div class="c-avatar-wrap"><div class="c-avatar" style="background:${misEstados[0].bg};"></div></div>
@@ -1210,15 +1287,28 @@
           <div class="c-info"><div class="c-name">Mi estado</div><div class="c-sub">Tocá para agregar</div></div>
         </div>`;
 
-    el.innerHTML = miEstadoHTML + '<div class="section-label">Recientes</div>' +
-      estadosAjenos.map((e,i) => `
-        <div class="contact-row" onclick="verEstado('ajeno', ${i})">
-          <div class="c-avatar-wrap"><div class="c-avatar" style="background:${e.bg};"></div></div>
-          <div class="c-info"><div class="c-name">${e.name}</div><div class="c-sub">${e.time}</div></div>
-        </div>`).join('');
+    const ajenosHTML = estadosAjenos.length
+      ? estadosAjenos.map((e,i) => `
+          <div class="contact-row" onclick="verEstado('ajeno', ${i})">
+            <div class="c-avatar-wrap"><div class="c-avatar" style="background:${e.bg};"></div></div>
+            <div class="c-info"><div class="c-name">${escapeHtml(e.name)}</div><div class="c-sub">${e.time}</div></div>
+          </div>`).join('')
+      : `<div style="text-align:center; color:var(--ink-muted); font-size:11.5px; padding:16px;">Nadie más subió un estado todavía.</div>`;
+
+    el.innerHTML = miEstadoHTML + '<div class="section-label">Recientes</div>' + ajenosHTML;
   }
 
-  let estadoColorActual = 'linear-gradient(135deg,#ff00ff,#7b3ff2)';
+  function timeAgo(dateStr){
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'Ahora';
+    if (mins < 60) return `Hace ${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `Hace ${hrs} h`;
+    return `Hace ${Math.floor(hrs/24)} d`;
+  }
+
+  let estadoColorActual = '#ff00ff';
   function setEstadoColor(bg){
     estadoColorActual = bg;
     document.getElementById('crearEstadoPreview').style.background = bg;
@@ -1226,21 +1316,37 @@
     event.target.style.border = '2px solid #fff';
   }
 
-  function publicarEstado(){
-    const texto = document.getElementById('crearEstadoTexto').value.trim() || 'Nuevo estado';
-    misEstados.unshift({time:'Ahora', bg:estadoColorActual, text:texto});
+  async function publicarEstado(){
+    const texto = document.getElementById('crearEstadoTexto').value.trim();
+    if (!texto){ alert('Escribí algo para tu estado'); return; }
+
+    const { error } = await sb.from('statuses').insert({
+      user_id: currentUser.id,
+      content: texto,
+      background_color: estadoColorActual
+    });
+
+    if (error){ alert('No se pudo publicar: ' + error.message); return; }
+
     document.getElementById('crearEstadoTexto').value = '';
+    await renderEstadosList();
     goTo('estados');
   }
 
   let estadoTimer = null;
   function verEstado(quien, idx){
     const data = quien === 'mio' ? misEstados[idx] : estadosAjenos[idx];
+    if (!data) return;
     document.getElementById('estadoViewerName').textContent = quien === 'mio' ? 'Mi estado' : data.name;
     const content = document.getElementById('estadoViewerContent');
     content.style.background = data.bg;
-    content.innerHTML = `<span style="font-family:'Space Grotesk'; font-weight:700; font-size:22px; color:#000;">${data.text}</span>`;
+    content.innerHTML = `<span style="font-family:'Space Grotesk'; font-weight:700; font-size:22px; color:#000;">${escapeHtml(data.text || '')}</span>`;
     goTo('ver-estado');
+
+    if (quien === 'ajeno' && data.id){
+      sb.from('status_views').upsert({ status_id: data.id, viewer_id: currentUser.id }, { onConflict: 'status_id,viewer_id' });
+    }
+
     const bar = document.getElementById('estadoProgress');
     bar.style.transition = 'none';
     bar.style.width = '0%';
@@ -1296,45 +1402,92 @@
     });
   })();
 
-  function newNotificationArrives(){
-    hasUnreadNotif = true;
-    showDropToast('notif', 'Melina G.', 'Dale, te llamo en 5 min 🙌', '<svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8 2 6 5 6 9v4l-2 3v1h16v-1l-2-3V9c0-4-2-7-6-7z" stroke="#ffb020" stroke-width="1.6"/></svg>');
+  function ringBell(){
+    const bell = document.getElementById('bellBtn');
+    if (bell){ bell.classList.add('ringing'); setTimeout(() => bell.classList.remove('ringing'), 900); }
+  }
+  function ringEstadosBtn(){
+    const btn = document.getElementById('estadosBtn');
+    if (btn){ btn.classList.add('ringing'); setTimeout(() => btn.classList.remove('ringing'), 900); }
+  }
+  function refreshHomeIfChats(){
     const homeActive = document.querySelector('.screen.active').id === 'screen-home';
-    if (homeActive && currentTab === 'chats'){
-      renderTab('chats');
-      setTimeout(() => {
-        const bell = document.getElementById('bellBtn');
-        if (bell) bell.classList.add('ringing');
-        setTimeout(() => { if (bell) bell.classList.remove('ringing'); }, 900);
-      }, 50);
-    }
+    if (homeActive && currentTab === 'chats') renderTab('chats');
   }
 
-  function newEstadoArrives(){
-    hasNewEstado = true;
-    showDropToast('estado', 'Sole L. subió un estado', 'Tocá para ver', '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#00ffff" stroke-width="1.6"/><path d="M8 12a4 4 0 118 0 4 4 0 01-8 0z" stroke="#00ffff" stroke-width="1.6"/></svg>');
-    const homeActive = document.querySelector('.screen.active').id === 'screen-home';
-    if (homeActive && currentTab === 'chats'){
-      renderTab('chats');
-      setTimeout(() => {
-        const btn = document.getElementById('estadosBtn');
-        if (btn) btn.classList.add('ringing');
-        setTimeout(() => { if (btn) btn.classList.remove('ringing'); }, 900);
-      }, 50);
-    }
+  function subscribeToNotifications(){
+    if (!currentUser) return;
+    sb.channel('notif-' + currentUser.id)
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'notifications', filter:`user_id=eq.${currentUser.id}` }, (payload) => {
+        const n = payload.new;
+        hasUnreadNotif = true;
+        showDropToast('notif', n.title, n.body || '', '<svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8 2 6 5 6 9v4l-2 3v1h16v-1l-2-3V9c0-4-2-7-6-7z" stroke="#ffb020" stroke-width="1.6"/></svg>');
+        refreshHomeIfChats();
+        ringBell();
+      })
+      .subscribe();
   }
 
-  // Simula que llegan notificaciones nuevas mientras usás la app
-  setTimeout(newNotificationArrives, 4000);
-  setTimeout(newEstadoArrives, 7000);
+  function subscribeToNewStatuses(){
+    sb.channel('statuses-global')
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'statuses' }, (payload) => {
+        const s = payload.new;
+        if (!currentUser || s.user_id === currentUser.id) return;
+        hasNewEstado = true;
+        showDropToast('estado', 'Nuevo estado', 'Tocá para ver', '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#00ffff" stroke-width="1.6"/><path d="M8 12a4 4 0 118 0 4 4 0 01-8 0z" stroke="#00ffff" stroke-width="1.6"/></svg>');
+        refreshHomeIfChats();
+        ringEstadosBtn();
+      })
+      .subscribe();
+  }
 
-  function incomingCall(){ goTo('incoming'); }
 
-  function acceptRequest(btn){
-    const card = btn.closest('div[style*="border-radius"]');
-    card.style.borderColor = 'var(--lime)';
-    card.querySelector('.c-sub').textContent = '✓ Ahora son contactos';
-    setTimeout(() => card.remove(), 900);
+  async function openSolicitudes(){
+    goTo('solicitudes');
+    const el = document.getElementById('solicitudesList');
+
+    const { data, error } = await sb
+      .from('contacts')
+      .select('id, user_id, profiles:user_id(name)')
+      .eq('contact_id', currentUser.id)
+      .eq('status', 'pending');
+
+    if (error){
+      el.innerHTML = `<div style="text-align:center; color:var(--danger); font-size:12px; padding:20px;">Error cargando solicitudes</div>`;
+      return;
+    }
+
+    if (!data || data.length === 0){
+      el.innerHTML = `<div style="text-align:center; color:var(--ink-muted); font-size:12px; padding:20px;">No tenés solicitudes pendientes.</div>`;
+      return;
+    }
+
+    el.innerHTML = data.map(r => `
+      <div id="req-${r.id}" style="background:#000; border:1.5px solid var(--pink); border-radius:16px; padding:14px; margin-bottom:12px;">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div class="c-avatar"></div>
+          <div><div class="c-name">${escapeHtml(r.profiles?.name || 'Usuario')}</div><div class="c-sub">Quiere agregarte</div></div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button class="btn-primary" style="border-color:var(--lime); color:var(--lime); box-shadow:0 0 10px rgba(198,255,61,0.3); padding:9px;" onclick="acceptRequest('${r.id}')">Aceptar</button>
+          <button class="btn-primary" style="border-color:var(--danger); color:var(--danger); box-shadow:none; padding:9px;" onclick="rejectRequest('${r.id}')">Rechazar</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function acceptRequest(requestId){
+    const { error } = await sb.from('contacts').update({ status: 'accepted' }).eq('id', requestId);
+    if (error){ alert('Error: ' + error.message); return; }
+    const card = document.getElementById('req-' + requestId);
+    if (card) card.remove();
+    await loadRealContacts();
+  }
+
+  async function rejectRequest(requestId){
+    const { error } = await sb.from('contacts').delete().eq('id', requestId);
+    if (error){ alert('Error: ' + error.message); return; }
+    const card = document.getElementById('req-' + requestId);
+    if (card) card.remove();
   }
 
   function setTheme(c1, c2){
