@@ -353,6 +353,8 @@
       <div class="bubble them">Dale, te llamo en 5 min</div>
     </div>
     <div class="input-row">
+      <input type="file" id="attachInput" accept="image/*" style="display:none;" onchange="sendAttachment(this.files[0])">
+      <button class="send-btn" style="border-color:var(--pink); box-shadow:0 0 10px rgba(255,0,255,0.4);" onclick="document.getElementById('attachInput').click()"><svg viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a5 5 0 01-7.07-7.07l9.19-9.19a3.5 3.5 0 014.95 4.95l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="#ff00ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <input type="text" placeholder="Escribí un mensaje..." id="chatInput">
       <button class="send-btn" onclick="sendMsgReal()"><svg viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="#00ffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
@@ -374,6 +376,7 @@
         <button class="btn-primary" style="border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 14px rgba(0,255,255,0.35);" onclick="goTo('chat')">Chatear</button>
       </div>
       <button class="btn-primary" style="margin-top:10px; border-color:rgba(255,255,255,0.25); color:var(--ink-muted); box-shadow:none;" onclick="goTo('editprofile')">Editar perfil</button>
+      <button class="btn-primary" style="margin-top:10px; border-color:var(--danger); color:var(--danger); box-shadow:none;" onclick="blockCurrentContact()">Bloquear / Reportar</button>
     </div>
   </div>
 
@@ -839,6 +842,25 @@
     } catch(e){ console.error('No se pudo registrar la llamada', e); }
   }
 
+  async function blockCurrentContact(){
+    if (!activeChatContact || !currentUser) return;
+    const confirmed = confirm(`¿Bloquear y reportar a ${activeChatContact.name}? No vas a poder chatear ni recibir llamadas de esta persona.`);
+    if (!confirmed) return;
+
+    const { error } = await sb.from('contacts').upsert({
+      user_id: currentUser.id,
+      contact_id: activeChatContact.id,
+      status: 'blocked'
+    }, { onConflict: 'user_id,contact_id' });
+
+    if (error){ alert('No se pudo bloquear: ' + error.message); return; }
+
+    contacts = contacts.filter(c => c.id !== activeChatContact.id);
+    activeChatContact = null;
+    alert('Listo, bloqueaste y reportaste a esa persona.');
+    goTo('home');
+  }
+
   async function loadRealContacts(){
     if (!currentUser) return;
     const { data, error } = await sb
@@ -849,13 +871,22 @@
 
     if (error){ console.error(error); return; }
 
-    contacts = (data || []).map(p => ({
-      id: p.id,
-      name: p.name || 'Sin nombre',
-      sub: 'Perfil verificado',
-      time: '',
-      verified: true
-    }));
+    const { data: blockedRows } = await sb
+      .from('contacts')
+      .select('contact_id')
+      .eq('user_id', currentUser.id)
+      .eq('status', 'blocked');
+    const blockedIds = new Set((blockedRows || []).map(r => r.contact_id));
+
+    contacts = (data || [])
+      .filter(p => !blockedIds.has(p.id))
+      .map(p => ({
+        id: p.id,
+        name: p.name || 'Sin nombre',
+        sub: 'Perfil verificado',
+        time: '',
+        verified: true
+      }));
 
     if (document.getElementById('screen-home').classList.contains('active')){
       renderTab(currentTab);
@@ -875,6 +906,23 @@
     subscribeToMessages();
   }
 
+  function renderBubbleHtml(m, isMe){
+    if (m.attachment_type === 'image' && m.attachment_url){
+      return `<div class="bubble ${isMe ? 'me' : 'them'}" style="padding:5px;"><img class="chat-img" data-path="${escapeHtml(m.attachment_url)}" style="max-width:180px; max-height:220px; border-radius:12px; display:block; background:#000;"></div>`;
+    }
+    return `<div class="bubble ${isMe ? 'me' : 'them'}">${escapeHtml(m.content || '')}</div>`;
+  }
+
+  async function resolveChatImages(container){
+    const imgs = container.querySelectorAll('.chat-img[data-path]');
+    for (const img of imgs){
+      const path = img.getAttribute('data-path');
+      const { data } = await sb.storage.from('avatars').createSignedUrl(path, 3600);
+      if (data) img.src = data.signedUrl;
+      img.removeAttribute('data-path');
+    }
+  }
+
   async function loadMessages(){
     const messagesEl = document.querySelector('.messages');
     messagesEl.innerHTML = '<div style="text-align:center; color:var(--ink-muted); font-size:12px; padding:20px;">Cargando mensajes...</div>';
@@ -892,10 +940,9 @@
       return;
     }
 
-    messagesEl.innerHTML = data.map(m => `
-      <div class="bubble ${m.sender_id === currentUser.id ? 'me' : 'them'}">${escapeHtml(m.content || '')}</div>
-    `).join('');
+    messagesEl.innerHTML = data.map(m => renderBubbleHtml(m, m.sender_id === currentUser.id)).join('');
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    resolveChatImages(messagesEl);
   }
 
   function subscribeToMessages(){
@@ -912,11 +959,12 @@
         const emptyMsg = messagesEl.querySelector('div[style*="Todavía no hay"]');
         if (emptyMsg) messagesEl.innerHTML = '';
 
-        const div = document.createElement('div');
-        div.className = 'bubble ' + (m.sender_id === currentUser.id ? 'me' : 'them');
-        div.textContent = m.content;
-        messagesEl.appendChild(div);
+        const wrap = document.createElement('div');
+        wrap.innerHTML = renderBubbleHtml(m, m.sender_id === currentUser.id);
+        const bubble = wrap.firstElementChild;
+        messagesEl.appendChild(bubble);
         messagesEl.scrollTop = messagesEl.scrollHeight;
+        resolveChatImages(messagesEl);
       })
       .subscribe();
   }
@@ -936,6 +984,28 @@
 
     if (error){ console.error(error); alert('No se pudo enviar: ' + error.message); }
   }
+
+  async function sendAttachment(file){
+    if (!file || !activeChatContact || !currentUser) return;
+    if (!file.type.startsWith('image/')){ alert('Por ahora solo se pueden mandar fotos'); return; }
+
+    const path = `${currentUser.id}/chat/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`;
+    const { error: upErr } = await sb.storage.from('avatars').upload(path, file);
+
+    document.getElementById('attachInput').value = '';
+
+    if (upErr){ alert('No se pudo subir la foto: ' + upErr.message); return; }
+
+    const { error } = await sb.from('messages').insert({
+      sender_id: currentUser.id,
+      receiver_id: activeChatContact.id,
+      attachment_url: path,
+      attachment_type: 'image'
+    });
+
+    if (error){ alert('No se pudo enviar la foto: ' + error.message); }
+  }
+
 
   function escapeHtml(text){
     const div = document.createElement('div');
