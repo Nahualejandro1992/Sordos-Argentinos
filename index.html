@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos</title>
+<style>
+  :root{ --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff; --texto:#f4e9ff; --texto-dim:#b79ad1; }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html,body{ width:100%; height:100%; background:var(--violeta-bg); overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  #app{ position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    padding:0 30px; text-align:center; }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.2; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  .logo{ position:relative; z-index:1; font-size:30px; font-weight:800; color:#fff;
+    background:linear-gradient(135deg,var(--magenta),var(--cian)); padding:14px 28px; border-radius:20px;
+    box-shadow:0 8px 30px rgba(255,46,196,.4); }
+  .spinner{ position:relative; z-index:1; width:34px; height:34px; border-radius:50%; border:3px solid rgba(255,255,255,.1);
+    border-top-color:var(--cian); animation:girar .8s linear infinite; }
+  @keyframes girar{ to{ transform:rotate(360deg); } }
+  p{ position:relative; z-index:1; color:var(--texto-dim); font-size:13px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+  <div class="logo">SA</div>
+  <div class="spinner"></div>
+  <p>Cargando Sordos Argentinos...</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined'){
+      // sin conexión: igual mandamos al login, ahí se ve el aviso de error
+      window.location.href = 'login.html';
+      return;
+    }
+    const sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+
+    const { data: sesionData } = await sb.auth.getSession();
+
+    if(!sesionData.session){
+      // nadie logueado -> mandamos al login (desde ahí se puede ir a crear cuenta)
+      window.location.href = 'login.html';
+      return;
+    }
+
+    // ya hay sesión -> vamos directo a la lista de chats
+    window.location.href = 'chats-lista.html';
+  });
+
+  // si por lo que sea tarda mucho (>4seg), no dejamos a la persona colgada
+  setTimeout(() => {
+    if(document.getElementById('app')) window.location.href = 'login.html';
+  }, 4000);
+</script>
+</body>
+</html>
