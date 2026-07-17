@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Perfil</title>
+<style>
+  :root{
+    --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff;
+    --texto:#f4e9ff; --texto-dim:#b79ad1;
+    --input-bg:rgba(255,255,255,.05); --input-borde:rgba(255,255,255,.12);
+    --ambar:#ffb020; --verde:#5bffa0;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; overscroll-behavior:none; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  input,textarea,select{ font-size:16px; font-family:inherit; }
+
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+    padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+    overflow:hidden; background:var(--violeta-bg);
+  }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.28; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  .pantalla{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column;
+    overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+
+  .header{ display:flex; align-items:center; justify-content:space-between; padding:10px 8px; flex-shrink:0; }
+  .btn-atras{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.05); }
+  .btn-atras:active{ background:rgba(255,255,255,.12); }
+  .btn-atras svg{ width:20px; height:20px; }
+  .header h2{ font-size:16px; font-weight:700; color:var(--texto); }
+  .btn-guardar{ min-width:60px; min-height:36px; padding:0 14px; border-radius:18px; border:none;
+    background:rgba(255,255,255,.06); color:var(--texto-dim); font-size:13.5px; font-weight:700; }
+  .btn-guardar.activo{ background:linear-gradient(135deg,var(--magenta),var(--cian)); color:#fff; }
+
+  .contenido{ flex:1; padding:8px 26px 40px; display:flex; flex-direction:column; align-items:center; }
+
+  /* ===== avatar + estado ===== */
+  .avatar-wrap{ position:relative; margin-top:16px; width:112px; height:112px; }
+  .avatar{ width:112px; height:112px; aspect-ratio:1/1; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian)); position:relative; overflow:hidden;
+    border:3px solid rgba(255,255,255,.1);
+    -webkit-mask-image:radial-gradient(circle 56px at center, #000 99%, transparent 100%);
+    mask-image:radial-gradient(circle 56px at center, #000 99%, transparent 100%);
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    -webkit-transform:translateZ(0); transform:translateZ(0); isolation:isolate; }
+  .avatar span{ font-size:38px; font-weight:800; color:#fff; }
+  .avatar img{ width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;
+    -webkit-transform:translateZ(0); transform:translateZ(0); }
+  .btn-cambiar-foto{ position:absolute; right:-2px; bottom:-2px; width:38px; height:38px; border-radius:50%;
+    background:var(--violeta-bg); border:2px solid var(--cian); display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 10px 2px rgba(23,242,255,.35); }
+  .btn-cambiar-foto svg{ width:17px; height:17px; color:var(--cian); }
+
+  .badge-estado{ margin-top:16px; display:flex; align-items:center; gap:7px; padding:7px 16px; border-radius:20px; font-size:12.5px; font-weight:700; }
+  .badge-estado.pendiente{ background:rgba(255,176,32,.12); border:1px solid rgba(255,176,32,.35); color:var(--ambar); }
+  .badge-estado.verificado{ background:rgba(91,255,160,.1); border:1px solid rgba(91,255,160,.35); color:var(--verde); }
+  .badge-estado svg{ width:15px; height:15px; }
+  .badge-estado.pendiente svg{ animation:girarReloj 4s linear infinite; }
+  @keyframes girarReloj{ to{ transform:rotate(360deg); } }
+
+  .texto-estado{ margin-top:10px; font-size:13px; color:var(--texto-dim); text-align:center; line-height:1.5; max-width:290px; }
+
+  /* ===== campos ===== */
+  .campo{ margin-top:26px; width:100%; }
+  .campo label{ display:block; font-size:12.5px; color:var(--texto-dim); letter-spacing:.4px; margin-bottom:8px; font-weight:600; }
+  .campo-input{ position:relative; display:flex; align-items:center; }
+  .campo-input input, .campo-input textarea{ width:100%; min-height:52px; border-radius:14px; border:1.5px solid var(--input-borde);
+    background:var(--input-bg); color:var(--texto); padding:14px 16px; outline:none; resize:none; }
+  .campo-input input:focus, .campo-input textarea:focus{ border-color:var(--magenta); box-shadow:0 0 0 3px rgba(255,46,196,.15); }
+  .campo-input input::placeholder, .campo-input textarea::placeholder{ color:rgba(183,154,209,.55); }
+  .contador-caracteres{ margin-top:6px; text-align:right; font-size:11px; color:var(--texto-dim); }
+
+  .fila-info{ width:100%; margin-top:26px; display:flex; flex-direction:column; gap:1px; border-radius:14px; overflow:hidden; }
+  .item-info{ background:rgba(255,255,255,.04); padding:14px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .item-info .izq{ display:flex; align-items:center; gap:12px; }
+  .item-info .izq svg{ width:19px; height:19px; color:var(--texto-dim); }
+  .item-info .label{ font-size:14px; color:var(--texto); font-weight:600; }
+  .item-info .valor{ font-size:13px; color:var(--texto-dim); }
+
+  @media (prefers-reduced-motion: reduce){ .badge-estado.pendiente svg{ animation:none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+
+  <div class="pantalla">
+    <div class="header">
+      <div class="btn-atras" id="btnAtras">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f4e9ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </div>
+      <h2>Tu perfil</h2>
+      <button class="btn-guardar" id="btnGuardar">Guardar</button>
+    </div>
+
+    <div class="contenido">
+      <div class="avatar-wrap">
+        <div class="avatar"><span id="inicialAvatar">M</span></div>
+        <div class="btn-cambiar-foto" id="btnCambiarFoto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 16.5V19a1 1 0 0 0 1 1h2.5L18 8.5a2 2 0 0 0 0-2.8l-1.7-1.7a2 2 0 0 0-2.8 0L3 15.5Z"/>
+          </svg>
+        </div>
+        <input type="file" id="inputFoto" accept="image/*" style="display:none" />
+      </div>
+
+      <div class="badge-estado pendiente" id="badgeEstado">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
+        </svg>
+        <span id="textoBadge">Pendiente de verificación</span>
+      </div>
+      <div class="texto-estado" id="textoEstado">
+        Un admin de Sordos Argentinos revisa tu foto y tus datos antes de activar el check azul. Mientras tanto, ya podés usar la app.
+      </div>
+
+      <div class="campo">
+        <label for="nombre">Nombre de usuario</label>
+        <div class="campo-input">
+          <input id="nombre" type="text" value="martu_bsas" autocapitalize="off" />
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="bio">Biografía</label>
+        <div class="campo-input">
+          <textarea id="bio" rows="3" maxlength="120" placeholder="Contá algo sobre vos...">Fana de Boca y de las tardes de mate 🧉</textarea>
+        </div>
+        <div class="contador-caracteres"><span id="contadorBio">37</span>/120</div>
+      </div>
+
+      <div class="fila-info">
+        <div class="item-info">
+          <div class="izq">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 11.5C3 7.4 6.8 4 11.5 4S20 7.4 20 11.5 16.2 19 11.5 19c-1 0-2-.2-2.9-.5L4 20l1.2-3.5C3.8 15 3 13.3 3 11.5Z"/>
+            </svg>
+            <span class="label">Miembro desde</span>
+          </div>
+          <span class="valor">Julio 2026</span>
+        </div>
+        <div class="item-info">
+          <div class="izq">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2 3 6.5v5c0 5 4 8.5 9 10.5 5-2 9-5.5 9-10.5v-5L12 2Z"/>
+            </svg>
+            <span class="label">Cuenta</span>
+          </div>
+          <span class="valor">100% gratis</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const nombre = document.getElementById('nombre');
+  const inicialAvatar = document.getElementById('inicialAvatar');
+  const bio = document.getElementById('bio');
+  const contadorBio = document.getElementById('contadorBio');
+  const btnGuardar = document.getElementById('btnGuardar');
+  const badgeEstado = document.getElementById('badgeEstado');
+  const textoBadge = document.getElementById('textoBadge');
+  const textoEstado = document.getElementById('textoEstado');
+
+  let sb = null;
+  let miId = null;
+  let archivoFotoNuevo = null;
+
+  function avisar(texto){
+    let b = document.getElementById('bannerDiagnosticoPerfil');
+    if(!b){
+      b = document.createElement('div');
+      b.id = 'bannerDiagnosticoPerfil';
+      b.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; font-family:sans-serif; text-align:center; line-height:1.5;';
+      document.body.prepend(b);
+    }
+    b.textContent = texto;
+  }
+
+  async function iniciar(){
+    if(typeof supabase === 'undefined'){
+      avisar('⚠️ No se pudo cargar la conexión a Supabase. Revisá tu internet.');
+      return;
+    }
+    sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session){
+      avisar('⚠️ Necesitás iniciar sesión primero. Te llevamos al login...');
+      setTimeout(() => window.location.href = 'login.html', 1500);
+      return;
+    }
+    miId = sesionData.session.user.id;
+
+    const { data: perfil, error } = await sb.from('profiles').select('name, bio, avatar_url, status, created_at').eq('id', miId).single();
+    if(error){
+      avisar('Error cargando tu perfil: ' + error.message);
+      return;
+    }
+
+    nombre.value = perfil.name || '';
+    bio.value = perfil.bio || '';
+    contadorBio.textContent = bio.value.length;
+    actualizarInicial();
+
+    if(perfil.avatar_url){
+      document.querySelector('.avatar').innerHTML = `<img src="${perfil.avatar_url}" alt="Foto de perfil" />`;
+    }
+
+    if(perfil.status === 'verified'){
+      badgeEstado.classList.remove('pendiente');
+      badgeEstado.classList.add('verificado');
+      textoBadge.textContent = 'Cuenta verificada';
+      textoEstado.textContent = 'Tu cuenta ya fue aprobada por un admin. ¡Disfrutá la app!';
+    } else if(perfil.status === 'rejected'){
+      textoBadge.textContent = 'Cuenta rechazada';
+      textoEstado.textContent = 'Tu cuenta fue rechazada. Contactá a un admin si creés que fue un error.';
+    }
+
+    const fecha = perfil.created_at ? new Date(perfil.created_at) : null;
+    if(fecha){
+      const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+      document.querySelector('.item-info .valor').textContent = meses[fecha.getMonth()] + ' ' + fecha.getFullYear();
+    }
+  }
+  iniciar();
+
+  function actualizarInicial(){
+    const v = nombre.value.trim();
+    inicialAvatar.textContent = v.length > 0 ? v[0].toUpperCase() : '?';
+  }
+  nombre.addEventListener('input', () => { actualizarInicial(); marcarCambio(); });
+
+  bio.addEventListener('input', () => {
+    contadorBio.textContent = bio.value.length;
+    marcarCambio();
+  });
+
+  function marcarCambio(){
+    btnGuardar.classList.add('activo');
+  }
+
+  btnGuardar.addEventListener('click', async () => {
+    if(!btnGuardar.classList.contains('activo') || !sb || !miId) return;
+
+    btnGuardar.textContent = 'Guardando...';
+
+    let avatarUrl = null;
+    if(archivoFotoNuevo){
+      const nombreArchivo = miId + '-' + Date.now() + '.jpg';
+      const { error: errorSubida } = await sb.storage.from('avatars').upload(nombreArchivo, archivoFotoNuevo, { upsert: true });
+      if(errorSubida){
+        avisar('Error subiendo la foto: ' + errorSubida.message);
+        btnGuardar.textContent = 'Guardar';
+        return;
+      }
+      const { data: urlPublica } = sb.storage.from('avatars').getPublicUrl(nombreArchivo);
+      avatarUrl = urlPublica.publicUrl;
+    }
+
+    const actualizacion = { name: nombre.value.trim(), bio: bio.value.trim() };
+    if(avatarUrl) actualizacion.avatar_url = avatarUrl;
+
+    const { error } = await sb.from('profiles').update(actualizacion).eq('id', miId);
+
+    if(error){
+      avisar('Error guardando: ' + error.message);
+      btnGuardar.textContent = 'Guardar';
+      return;
+    }
+
+    btnGuardar.textContent = 'Guardado ✓';
+    setTimeout(() => {
+      btnGuardar.textContent = 'Guardar';
+      btnGuardar.classList.remove('activo');
+    }, 1400);
+  });
+
+  document.getElementById('btnCambiarFoto').addEventListener('click', () => {
+    document.getElementById('inputFoto').click();
+  });
+
+  document.getElementById('inputFoto').addEventListener('change', (e) => {
+    const archivo = e.target.files[0];
+    if(!archivo) return;
+    archivoFotoNuevo = archivo;
+    const lector = new FileReader();
+    lector.onload = (ev) => {
+      const avatar = document.querySelector('.avatar');
+      avatar.innerHTML = `<img src="${ev.target.result}" alt="Foto de perfil" />`;
+      marcarCambio();
+    };
+    lector.onerror = () => {
+      console.log('No se pudo leer la imagen');
+    };
+    lector.readAsDataURL(archivo);
+  });
+
+  document.getElementById('btnAtras').addEventListener('click', () => { window.location.href = 'ajustes.html'; });
+
+  // swipe desde el borde izquierdo para volver
+  let startX = 0;
+  document.getElementById('app').addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+  document.getElementById('app').addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if(startX < 24 && dx > 60){ window.location.href = 'ajustes.html'; }
+  }, {passive:true});
+</script>
+</body>
+</html>
