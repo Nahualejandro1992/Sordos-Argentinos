@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Login</title>
+<style>
+  :root{
+    --violeta-bg:#050014; --violeta-bg-2:#050014;
+    --magenta:#ff2ec4; --cian:#17f2ff;
+    --texto:#f4e9ff; --texto-dim:#b79ad1;
+    --input-bg:rgba(255,255,255,.05); --input-borde:rgba(255,255,255,.12);
+    --error:#ff5470; --celeste:#75aadb; --sol:#f6b40e;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; overscroll-behavior:none; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  input,textarea,select{ font-size:16px; font-family:inherit; }
+
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+    padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+    overflow:hidden; background:var(--violeta-bg);
+  }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.35; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+
+  @media (prefers-reduced-motion: reduce){
+    .fondo-aurora{ animation:none; }
+  }
+
+  /* ===== efectos completos, iguales al registro/onboarding ===== */
+  .capa-efectos{ position:absolute; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
+
+  .papel{ position:absolute; top:-24px; border-radius:1px; opacity:.9;
+    animation-name:caer; animation-timing-function:linear; animation-iteration-count:infinite; }
+  @keyframes caer{
+    0%{ transform:translateY(-5vh) translateX(0) rotate(0deg); }
+    100%{ transform:translateY(115vh) translateX(var(--drift,20px)) rotate(var(--giro,360deg)); }
+  }
+
+  .cohete{ position:absolute; width:3px; height:3px; border-radius:50%; animation:subirCohete .55s ease-out forwards; }
+  @keyframes subirCohete{ 0%{ transform:translateY(0); opacity:1; } 100%{ transform:translateY(var(--altura,-120px)); opacity:1; } }
+  .chispa{ position:absolute; width:4px; height:4px; border-radius:50%; animation:explotar 1s cubic-bezier(.15,.6,.3,1) forwards; }
+  @keyframes explotar{
+    0%{ transform:translate(0,0) scale(1.2); opacity:1; }
+    55%{ transform:translate(var(--dx), var(--dy)) scale(1); opacity:1; }
+    100%{ transform:translate(var(--dxf), var(--dyf)) scale(.15); opacity:0; }
+  }
+  .destello{ position:absolute; width:8px; height:8px; border-radius:50%;
+    box-shadow:0 0 16px 6px #fff, 0 0 34px 14px currentColor; animation:destelloAnim .45s ease-out forwards; }
+  @keyframes destelloAnim{ 0%{ transform:scale(.15); opacity:1; } 100%{ transform:scale(5); opacity:0; } }
+  .flashOnb{ position:absolute; inset:0; background:radial-gradient(circle at var(--fx,50%) var(--fy,50%), rgba(255,255,255,.75), transparent 60%);
+    animation:flashAnimOnb .3s ease-out forwards; pointer-events:none; }
+  @keyframes flashAnimOnb{ 0%{ opacity:1; } 100%{ opacity:0; } }
+
+  .titulo h1{ position:relative; }
+  .titulo h1 span::before, .titulo h1 span::after{
+    content:attr(data-txt); position:absolute; left:0; top:0; width:100%; }
+  .titulo h1 span::before{ color:var(--magenta); clip-path:inset(0 0 55% 0); animation:glitchA 3s infinite steps(1); }
+  .titulo h1 span::after{ color:var(--cian); clip-path:inset(55% 0 0 0); animation:glitchB 3s infinite steps(1); }
+  @keyframes glitchA{
+    0%, 88%, 100%{ transform:translate(0,0); opacity:0; }
+    89%{ transform:translate(-3px,0); opacity:.85; } 91%{ transform:translate(2px,0); opacity:.85; }
+    93%{ transform:translate(-2px,0); opacity:.85; } 95%{ transform:translate(0,0); opacity:0; }
+  }
+  @keyframes glitchB{
+    0%, 88%, 100%{ transform:translate(0,0); opacity:0; }
+    89%{ transform:translate(3px,0); opacity:.85; } 91%{ transform:translate(-2px,0); opacity:.85; }
+    93%{ transform:translate(2px,0); opacity:.85; } 95%{ transform:translate(0,0); opacity:0; }
+  }
+
+  .app-shake{ animation:sacudidaOnb .25s ease-in-out; }
+  .app-shake-fuerte{ animation:sacudidaOnb .35s ease-in-out; }
+  @keyframes sacudidaOnb{
+    0%,100%{ transform:translate(0,0) rotate(0deg); }
+    15%{ transform:translate(-10px,6px) rotate(-1deg); }
+    30%{ transform:translate(9px,-7px) rotate(1deg); }
+    45%{ transform:translate(-8px,-5px) rotate(-1deg); }
+    60%{ transform:translate(8px,6px) rotate(1deg); }
+    75%{ transform:translate(-6px,-4px) rotate(-.5deg); }
+    90%{ transform:translate(4px,3px) rotate(.5deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .papel, .cohete, .chispa, .destello, .titulo h1 span::before, .titulo h1 span::after,
+    .app-shake, .app-shake-fuerte{ animation:none; }
+  }
+
+  /* ===== pantalla ===== */
+  .pantalla{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; opacity:0; pointer-events:none;
+    transition:opacity .25s ease; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+  .pantalla.activa{ opacity:1; pointer-events:auto; }
+
+  .header{ display:flex; align-items:center; padding:10px 8px; flex-shrink:0; }
+  .btn-atras{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.05); }
+  .btn-atras:active{ background:rgba(255,255,255,.12); }
+  .btn-atras svg{ width:20px; height:20px; }
+
+  .contenido{ flex:1; padding:8px 26px 40px; display:flex; flex-direction:column; }
+
+  .logo-mini{ margin-top:18px; width:64px; height:64px; border-radius:50%; border:2px solid var(--cian);
+    box-shadow:0 0 14px 2px #7209b7 inset, 0 0 16px 2px var(--cian);
+    display:flex; align-items:center; justify-content:center;
+    animation:pulsoLogo 2.6s ease-in-out infinite; }
+  .logo-mini span{ font-size:22px; font-weight:800; color:#fff; }
+  @keyframes pulsoLogo{ 0%,100%{ filter:brightness(1); } 50%{ filter:brightness(1.2); } }
+
+  .titulo{ margin-top:18px; }
+  .titulo h1{ font-size:26px; font-weight:800; color:var(--texto); letter-spacing:.2px; }
+  .titulo p{ margin-top:8px; font-size:14px; color:var(--texto-dim); line-height:1.5; }
+
+  .campo{ margin-top:22px; }
+  .campo label{ display:block; font-size:12.5px; color:var(--texto-dim); letter-spacing:.4px; margin-bottom:8px; font-weight:600; }
+  .campo-input{ position:relative; display:flex; align-items:center; }
+  .campo-input input{ width:100%; min-height:52px; border-radius:14px; border:1.5px solid var(--input-borde);
+    background:var(--input-bg); color:var(--texto); padding:0 44px 0 16px; outline:none; }
+  .campo-input input:focus{ border-color:var(--magenta); box-shadow:0 0 0 3px rgba(255,46,196,.15); }
+  .campo-input input::placeholder{ color:rgba(183,154,209,.55); }
+  .icono-ojo{ position:absolute; right:14px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+  .icono-ojo svg{ width:20px; height:20px; color:var(--texto-dim); }
+
+  .olvide{ margin-top:12px; text-align:right; font-size:13px; color:var(--cian); font-weight:600; }
+
+  .ayuda{ margin-top:10px; font-size:12.5px; color:var(--error); display:none; align-items:flex-start; gap:6px; }
+  .ayuda.mostrar{ display:flex; }
+  .ayuda svg{ width:16px; height:16px; flex-shrink:0; margin-top:1px; }
+
+  .btn-primario{ margin-top:26px; width:100%; min-height:52px; border-radius:26px; border:none;
+    background:linear-gradient(135deg,var(--magenta),var(--cian)); color:#fff; font-size:15px; font-weight:700;
+    box-shadow:0 0 24px 4px rgba(255,46,196,.3); display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn-primario:active{ transform:scale(.98); }
+
+  .spinner{ width:18px; height:18px; border-radius:50%; border:2.5px solid rgba(255,255,255,.35);
+    border-top-color:#fff; display:none; animation:girar .7s linear infinite; }
+  @keyframes girar{ to{ transform:rotate(360deg); } }
+  .cargando .spinner{ display:block; }
+  .cargando .texto-btn{ display:none; }
+
+  .separador{ display:flex; align-items:center; gap:10px; margin-top:26px; }
+  .separador div{ flex:1; height:1px; background:rgba(255,255,255,.1); }
+  .separador span{ font-size:12px; color:var(--texto-dim); }
+
+  .link-registro{ margin-top:22px; text-align:center; font-size:13.5px; color:var(--texto-dim); }
+  .link-registro b{ color:var(--cian); font-weight:700; }
+
+  /* ===== pantalla: cuenta pendiente de aprobación ===== */
+  .espera{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 30px; }
+  .anillo-espera{ width:100px; height:100px; border-radius:50%; background:rgba(255,176,32,.08);
+    border:2px solid rgba(255,176,32,.25); display:flex; align-items:center; justify-content:center; }
+  .anillo-espera svg{ width:42px; height:42px; color:#ffb020; }
+  .espera h1{ margin-top:24px; font-size:20px; font-weight:800; color:var(--texto); }
+  .espera p{ margin-top:10px; font-size:14px; color:var(--texto-dim); line-height:1.55; max-width:300px; }
+  .btn-secundario{ margin-top:30px; min-height:48px; padding:0 24px; border-radius:24px; border:1.5px solid rgba(255,255,255,.15);
+    background:transparent; color:var(--texto-dim); font-size:14px; font-weight:600; }
+  .btn-secundario:active{ background:rgba(255,255,255,.06); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+  <div class="capa-efectos" id="capaEfectos"></div>
+
+  <!-- ===== PANTALLA 1: LOGIN ===== -->
+  <div class="pantalla activa" id="pantallaLogin">
+    <div class="header">
+      <div class="btn-atras" id="btnAtras">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f4e9ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="contenido">
+      <div class="titulo" style="margin-top:18px;">
+        <h1><span data-txt="Bienvenido de nuevo">Bienvenido de nuevo</span></h1>
+        <p>Iniciá sesión con tu usuario y contraseña.</p>
+      </div>
+
+      <div class="campo">
+        <label for="nickLogin">Nombre de usuario</label>
+        <div class="campo-input">
+          <input id="nickLogin" type="text" placeholder="Ej: martu_bsas" autocomplete="username" autocapitalize="off" />
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="passLogin">Contraseña</label>
+        <div class="campo-input">
+          <input id="passLogin" type="password" placeholder="Tu contraseña" autocomplete="current-password" />
+          <div class="icono-ojo" id="toggleVerPass">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+        </div>
+        <div class="olvide" id="irRecuperar">¿Olvidaste tu contraseña?</div>
+      </div>
+
+      <div class="ayuda" id="ayudaError">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.2" r=".6" fill="currentColor" stroke="none"/>
+        </svg>
+        <span id="ayudaErrorTexto">Usuario o contraseña incorrectos.</span>
+      </div>
+
+      <button class="btn-primario" id="btnIngresar">
+        <span class="texto-btn">Ingresar</span>
+        <div class="spinner"></div>
+      </button>
+
+      <div class="separador"><div></div><span>o</span><div></div></div>
+
+      <div class="link-registro">¿No tenés cuenta? <b id="irRegistro">Creá una gratis</b></div>
+    </div>
+  </div>
+
+  <!-- ===== PANTALLA 2: CUENTA PENDIENTE ===== -->
+  <div class="pantalla" id="pantallaPendiente">
+    <div class="espera">
+      <div class="anillo-espera">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
+        </svg>
+      </div>
+      <h1>Tu cuenta todavía está en revisión</h1>
+      <p>Un admin la tiene que aprobar antes de que puedas entrar. Te avisamos apenas esté lista.</p>
+      <button class="btn-secundario" id="btnVolverLogin">Volver</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://slidcibxmsfhssbdihou.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+<script>
+  const pantallaLogin = document.getElementById('pantallaLogin');
+  const pantallaPendiente = document.getElementById('pantallaPendiente');
+  const btnIngresar = document.getElementById('btnIngresar');
+  const nickLogin = document.getElementById('nickLogin');
+  const passLogin = document.getElementById('passLogin');
+  const ayudaError = document.getElementById('ayudaError');
+  const ayudaErrorTexto = document.getElementById('ayudaErrorTexto');
+
+  document.getElementById('toggleVerPass').addEventListener('click', () => {
+    passLogin.type = passLogin.type === 'password' ? 'text' : 'password';
+  });
+
+  [nickLogin, passLogin].forEach(el => el.addEventListener('input', () => {
+    ayudaError.classList.remove('mostrar');
+  }));
+
+  btnIngresar.addEventListener('click', async () => {
+    if(btnIngresar.classList.contains('cargando')) return;
+
+    if(nickLogin.value.trim() === '' || passLogin.value === ''){
+      ayudaErrorTexto.textContent = 'Completá usuario y contraseña.';
+      ayudaError.classList.add('mostrar');
+      return;
+    }
+
+    btnIngresar.classList.add('cargando');
+
+    const nickVal = nickLogin.value.trim().toLowerCase();
+    const emailSintetico = nickVal + '@sordosargentinos.app';
+
+    try{
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: emailSintetico,
+        password: passLogin.value
+      });
+
+      if(error){
+        btnIngresar.classList.remove('cargando');
+        ayudaErrorTexto.textContent = 'Usuario o contraseña incorrectos.';
+        ayudaError.classList.add('mostrar');
+        return;
+      }
+
+      // login correcto: chequeamos si la cuenta ya fue aprobada por un admin
+      const { data: perfil, error: errorPerfil } = await supabaseClient
+        .from('profiles')
+        .select('status')
+        .eq('id', data.user.id)
+        .single();
+
+      btnIngresar.classList.remove('cargando');
+
+      if(errorPerfil){
+        ayudaErrorTexto.textContent = 'No se pudo verificar tu cuenta, probá de nuevo.';
+        ayudaError.classList.add('mostrar');
+        return;
+      }
+
+      if(perfil.status === 'pending'){
+        pantallaLogin.classList.remove('activa');
+        pantallaPendiente.classList.add('activa');
+      } else if(perfil.status === 'rejected'){
+        ayudaErrorTexto.textContent = 'Tu cuenta fue rechazada. Contactá a un admin.';
+        ayudaError.classList.add('mostrar');
+      } else {
+        // status === 'verified' -> acá, en la app real, navega a la lista de Chats.
+        console.log('login OK, ir a chats-lista.html');
+      }
+
+    } catch(err){
+      btnIngresar.classList.remove('cargando');
+      console.error(err);
+      ayudaErrorTexto.textContent = 'Hubo un problema para entrar, probá de nuevo.';
+      ayudaError.classList.add('mostrar');
+    }
+  });
+
+  document.getElementById('btnVolverLogin').addEventListener('click', () => {
+    pantallaPendiente.classList.remove('activa');
+    pantallaLogin.classList.add('activa');
+  });
+
+  document.getElementById('btnAtras').addEventListener('click', () => { console.log('volver'); });
+  document.getElementById('irRegistro').addEventListener('click', () => { console.log('ir a registro'); });
+  document.getElementById('irRecuperar').addEventListener('click', () => { console.log('ir a recuperar contraseña'); });
+
+  // swipe desde el borde izquierdo para volver
+  let startX = 0;
+  document.getElementById('app').addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+  document.getElementById('app').addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if(startX < 24 && dx > 60){ console.log('volver por swipe'); }
+  }, {passive:true});
+
+  // ===== efectos: papelitos + cohetes con bombazo/super bombazo =====
+  const colores = ['#ff2ec4', '#17f2ff', '#f6b40e', '#ffffff'];
+  const capa = document.getElementById('capaEfectos');
+  const appEl = document.getElementById('app');
+
+  for(let i = 0; i < 40; i++){
+    const p = document.createElement('div');
+    p.className = 'papel';
+    const w = 4 + Math.random()*4, h = 8 + Math.random()*6;
+    p.style.left = (Math.random()*100) + 'vw';
+    p.style.width = w + 'px'; p.style.height = h + 'px';
+    p.style.background = colores[Math.floor(Math.random()*colores.length)];
+    p.style.setProperty('--drift', (Math.random()*80 - 40).toFixed(0) + 'px');
+    p.style.setProperty('--giro', (360 + Math.random()*360).toFixed(0) + 'deg');
+    p.style.animationDuration = (4 + Math.random()*3) + 's';
+    p.style.animationDelay = (Math.random()*3) + 's';
+    capa.appendChild(p);
+  }
+
+  let contadorBombazo = 0;
+
+  function lanzarCohete(){
+    contadorBombazo++;
+    const esSuper = contadorBombazo % 8 === 0;
+    const esBombazo = esSuper || contadorBombazo % 2 === 0;
+
+    const xInicio = 10 + Math.random()*80;
+    const alturaFinal = (esSuper ? 130 : esBombazo ? 100 : 75) + Math.random()*60;
+    const yBase = 40 + Math.random()*32;
+    const color = colores[Math.floor(Math.random()*colores.length)];
+
+    const cohete = document.createElement('div');
+    cohete.className = 'cohete';
+    cohete.style.left = xInicio + 'vw'; cohete.style.top = yBase + '%';
+    cohete.style.background = color; cohete.style.boxShadow = '0 0 8px 3px ' + color;
+    cohete.style.setProperty('--altura', '-' + alturaFinal + 'px');
+    capa.appendChild(cohete);
+
+    setTimeout(() => {
+      const cx = xInicio, cy = yBase - (alturaFinal / window.innerHeight * 100);
+      const c2 = colores[Math.floor(Math.random()*colores.length)];
+
+      if(esBombazo){
+        const flash = document.createElement('div');
+        flash.className = 'flashOnb';
+        flash.style.setProperty('--fx', cx + 'vw'); flash.style.setProperty('--fy', cy + '%');
+        capa.appendChild(flash);
+        setTimeout(() => flash.remove(), 320);
+
+        appEl.classList.remove('app-shake', 'app-shake-fuerte');
+        void appEl.offsetWidth;
+        appEl.classList.add(esSuper ? 'app-shake-fuerte' : 'app-shake');
+      }
+
+      const destello = document.createElement('div');
+      destello.className = 'destello';
+      destello.style.left = cx + 'vw'; destello.style.top = cy + '%';
+      destello.style.background = c2; destello.style.color = c2;
+      if(esSuper){ destello.style.transform = 'scale(2.4)'; }
+      else if(esBombazo){ destello.style.transform = 'scale(1.6)'; }
+      capa.appendChild(destello);
+      setTimeout(() => destello.remove(), 420);
+
+      const n = (esSuper ? 55 : esBombazo ? 30 : 15) + Math.floor(Math.random()*8);
+      for(let i = 0; i < n; i++){
+        const chispa = document.createElement('div');
+        chispa.className = 'chispa';
+        const ang = (Math.PI*2*i)/n + Math.random()*.3;
+        const dist = (esSuper ? 42 : esBombazo ? 30 : 20) + Math.random()*24;
+        const dx = Math.cos(ang)*dist, dy = Math.sin(ang)*dist;
+        const cc = colores[Math.floor(Math.random()*colores.length)];
+        chispa.style.left = cx + 'vw'; chispa.style.top = cy + '%';
+        chispa.style.background = cc; chispa.style.boxShadow = '0 0 6px 2px ' + cc;
+        chispa.style.setProperty('--dx', dx + 'px'); chispa.style.setProperty('--dy', dy + 'px');
+        chispa.style.setProperty('--dxf', (dx*1.3) + 'px'); chispa.style.setProperty('--dyf', (dy*1.3 + 30) + 'px');
+        capa.appendChild(chispa);
+        setTimeout(() => chispa.remove(), 1050);
+      }
+      cohete.remove();
+    }, 500);
+  }
+
+  setInterval(lanzarCohete, 700);
+</script>
+</body>
+</html>
