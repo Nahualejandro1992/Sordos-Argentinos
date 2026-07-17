@@ -245,11 +245,40 @@
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div id="bannerDiagnostico" style="display:none; position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; font-family:sans-serif; text-align:center; line-height:1.5;"></div>
+
 <script>
-  const SUPABASE_URL = 'https://slidcibxmsfhssbdihou.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI';
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], (exito) => {
+    const banner = document.getElementById('bannerDiagnostico');
+    if(!exito || typeof supabase === 'undefined'){
+      banner.style.display = 'block';
+      banner.textContent = '⚠️ No se pudo cargar la conexión a Supabase. Revisá tu internet, o puede que algo esté bloqueando cdn.jsdelivr.net / unpkg.com en tu red.';
+      window.supabaseListo = false;
+    } else {
+      window.supabaseListo = true;
+      window.supabaseClientGlobal = supabase.createClient(
+        'https://slidcibxmsfhssbdihou.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+      );
+    }
+  });
 </script>
 <script>
   const nick = document.getElementById('nick');
@@ -311,6 +340,15 @@
   btnCrear.addEventListener('click', async () => {
     if(btnCrear.disabled) return;
 
+    if(window.supabaseListo === false){
+      ayudaGeneral.textContent = 'No hay conexión a Supabase todavía. Revisá el aviso rojo de arriba.';
+      return;
+    }
+    if(!window.supabaseClientGlobal){
+      ayudaGeneral.textContent = 'Todavía está cargando la conexión, esperá un segundo y probá de nuevo.';
+      return;
+    }
+
     const nickVal = nick.value.trim();
     const passVal = pass.value;
     ayudaGeneral.textContent = '';
@@ -319,7 +357,7 @@
 
     try{
       // 1. chequeamos que el nombre de usuario no esté tomado
-      const { data: disponible, error: errorDisp } = await supabaseClient.rpc('username_disponible', { chequear_nombre: nickVal });
+      const { data: disponible, error: errorDisp } = await window.supabaseClientGlobal.rpc('username_disponible', { chequear_nombre: nickVal });
       if(errorDisp) throw errorDisp;
       if(!disponible){
         ayudaGeneral.textContent = 'Ese nombre de usuario ya está en uso, probá con otro.';
@@ -330,7 +368,7 @@
 
       // 2. creamos la cuenta con email sintético (el usuario nunca ve este email)
       const emailSintetico = nickVal.toLowerCase() + '@sordosargentinos.app';
-      const { data, error } = await supabaseClient.auth.signUp({
+      const { data, error } = await window.supabaseClientGlobal.auth.signUp({
         email: emailSintetico,
         password: passVal,
         options: { data: { username: nickVal } }
