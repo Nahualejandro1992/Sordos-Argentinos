@@ -234,12 +234,42 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div id="bannerDiagnostico" style="display:none; position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; font-family:sans-serif; text-align:center; line-height:1.5;"></div>
+
 <script>
-  const SUPABASE_URL = 'https://slidcibxmsfhssbdihou.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI';
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], (exito) => {
+    const banner = document.getElementById('bannerDiagnostico');
+    if(!exito || typeof supabase === 'undefined'){
+      banner.style.display = 'block';
+      banner.textContent = '⚠️ No se pudo cargar la conexión a Supabase. Revisá tu internet, o puede que algo esté bloqueando cdn.jsdelivr.net / unpkg.com en tu red.';
+      window.supabaseListo = false;
+    } else {
+      window.supabaseListo = true;
+      window.supabaseClientGlobal = supabase.createClient(
+        'https://slidcibxmsfhssbdihou.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+      );
+    }
+  });
 </script>
+
 <script>
   const pantallaLogin = document.getElementById('pantallaLogin');
   const pantallaPendiente = document.getElementById('pantallaPendiente');
@@ -260,6 +290,17 @@
   btnIngresar.addEventListener('click', async () => {
     if(btnIngresar.classList.contains('cargando')) return;
 
+    if(window.supabaseListo === false){
+      ayudaErrorTexto.textContent = 'No hay conexión a Supabase todavía. Revisá el aviso rojo de arriba.';
+      ayudaError.classList.add('mostrar');
+      return;
+    }
+    if(!window.supabaseClientGlobal){
+      ayudaErrorTexto.textContent = 'Todavía está cargando la conexión, esperá un segundo y probá de nuevo.';
+      ayudaError.classList.add('mostrar');
+      return;
+    }
+
     if(nickLogin.value.trim() === '' || passLogin.value === ''){
       ayudaErrorTexto.textContent = 'Completá usuario y contraseña.';
       ayudaError.classList.add('mostrar');
@@ -272,7 +313,7 @@
     const emailSintetico = nickVal + '@sordosargentinos.app';
 
     try{
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
+      const { data, error } = await window.supabaseClientGlobal.auth.signInWithPassword({
         email: emailSintetico,
         password: passLogin.value
       });
@@ -285,7 +326,7 @@
       }
 
       // login correcto: chequeamos si la cuenta ya fue aprobada por un admin
-      const { data: perfil, error: errorPerfil } = await supabaseClient
+      const { data: perfil, error: errorPerfil } = await window.supabaseClientGlobal
         .from('profiles')
         .select('status')
         .eq('id', data.user.id)
