@@ -114,21 +114,21 @@
       <div class="seccion">
         <div class="seccion-titulo">Herramientas</div>
         <div class="grupo">
-          <div class="item">
+          <div class="item" id="itemVozTexto">
             <div class="icono-item cian">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M9 22h6"/></svg>
             </div>
             <div class="texto"><div class="titulo-item">Voz a texto</div><div class="sub-item">Transcripción en vivo, modo cara a cara</div></div>
             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </div>
-          <div class="item">
+          <div class="item" id="itemDetectorSonidos">
             <div class="icono-item magenta">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-4a2 2 0 0 1 2-2h1V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2h1a2 2 0 0 1 2 2v4"/><path d="M4 14h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4Z"/></svg>
             </div>
             <div class="texto"><div class="titulo-item">Detector de sonidos</div><div class="sub-item">Alertas visuales para timbre, alarmas, etc.</div></div>
-            <div class="switch on"></div>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </div>
-          <div class="item">
+          <div class="item" id="itemVideollamada">
             <div class="icono-item amarillo">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg>
             </div>
@@ -142,26 +142,33 @@
       <div class="seccion">
         <div class="seccion-titulo">Personalización</div>
         <div class="grupo">
-          <div class="item">
+          <div class="item" id="itemTemaColores">
             <div class="icono-item violeta">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".6" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".6" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".6" fill="currentColor"/><path d="M12 2a10 10 0 1 0 0 20c1.7 0 2-1 1.3-2.2-.6-1-.1-2.3 1.2-2.3H17a3 3 0 0 0 3-3c0-6-3.6-9.5-8-12.5Z"/></svg>
             </div>
             <div class="texto"><div class="titulo-item">Tema y colores</div><div class="sub-item">Vaporwave, cyberpunk, Buenos Aires y más</div></div>
             <span class="valor-item">Neón Miami</span>
           </div>
-          <div class="item">
+          <div class="item" id="itemFondoAnimado">
             <div class="icono-item cian">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 15l4.5-4.5a2 2 0 0 1 2.8 0L15 15M13 13l1.5-1.5a2 2 0 0 1 2.8 0L21 15"/></svg>
             </div>
             <div class="texto"><div class="titulo-item">Fondo animado</div><div class="sub-item">Matrix, ecualizador, aurora y más</div></div>
             <span class="valor-item">Aurora</span>
           </div>
-          <div class="item">
+          <div class="item" id="itemFormaAvatar">
             <div class="icono-item magenta">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4" transform="rotate(45 12 12)"/></svg>
             </div>
             <div class="texto"><div class="titulo-item">Forma del avatar</div><div class="sub-item">Diamante, estrella, escudo y más</div></div>
             <span class="valor-item">Círculo</span>
+          </div>
+          <div class="item" id="itemEstiloAvatar">
+            <div class="icono-item cian">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5c0 5 4 8.5 9 10.5 5-2 9-5.5 9-10.5v-5L12 2Z"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Estilo del avatar</div><div class="sub-item">Neón tubo, cromado, arcoíris y más</div></div>
+            <span class="valor-item">Sólido</span>
           </div>
           <div class="item">
             <div class="icono-item cian">
@@ -177,19 +184,19 @@
       <div class="seccion">
         <div class="seccion-titulo">Privacidad y notificaciones</div>
         <div class="grupo">
-          <div class="item">
+          <div class="item" id="itemPrivacidad">
             <div class="icono-item verde" style="background:rgba(91,255,160,.12);color:#5bffa0;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5c0 5 4 8.5 9 10.5 5-2 9-5.5 9-10.5v-5L12 2Z"/></svg>
             </div>
             <div class="texto"><div class="titulo-item">Privacidad</div><div class="sub-item">Quién puede verte y contactarte</div></div>
             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </div>
-          <div class="item">
+          <div class="item" id="itemNotificaciones">
             <div class="icono-item amarillo">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
             </div>
             <div class="texto"><div class="titulo-item">Notificaciones</div><div class="sub-item">Visuales y por sirena para urgentes</div></div>
-            <div class="switch on"></div>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </div>
         </div>
       </div>
@@ -198,7 +205,7 @@
       <div class="seccion">
         <div class="seccion-titulo">Cuenta</div>
         <div class="grupo">
-          <div class="item">
+          <div class="item" id="itemAyuda">
             <div class="icono-item cian">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1.3.9-1.3 1.7v.3"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg>
             </div>
@@ -276,6 +283,17 @@
   document.querySelectorAll('.switch').forEach(sw => {
     sw.addEventListener('click', () => sw.classList.toggle('on'));
   });
+
+  document.getElementById('itemVozTexto').addEventListener('click', () => { window.location.href = 'voz-a-texto-vivo.html'; });
+  document.getElementById('itemDetectorSonidos').addEventListener('click', () => { window.location.href = 'detector-sonidos-vivo.html'; });
+  document.getElementById('itemVideollamada').addEventListener('click', () => { window.location.href = 'videollamada-config.html'; });
+  document.getElementById('itemTemaColores').addEventListener('click', () => { window.location.href = 'tema-colores.html'; });
+  document.getElementById('itemFondoAnimado').addEventListener('click', () => { window.location.href = 'fondo-animado.html'; });
+  document.getElementById('itemFormaAvatar').addEventListener('click', () => { window.location.href = 'forma-avatar.html'; });
+  document.getElementById('itemEstiloAvatar').addEventListener('click', () => { window.location.href = 'estilo-avatar.html'; });
+  document.getElementById('itemPrivacidad').addEventListener('click', () => { window.location.href = 'privacidad.html'; });
+  document.getElementById('itemNotificaciones').addEventListener('click', () => { window.location.href = 'notificaciones.html'; });
+  document.getElementById('itemAyuda').addEventListener('click', () => { window.location.href = 'ayuda.html'; });
 
   document.getElementById('btnAtras').addEventListener('click', () => { window.location.href = 'chats-lista.html'; });
   document.getElementById('irPerfil').addEventListener('click', () => { window.location.href = 'perfil.html'; });

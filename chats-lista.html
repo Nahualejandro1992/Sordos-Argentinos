@@ -212,7 +212,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
           <span id="badgeNotif" style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 4px; border-radius:8px;
             background:linear-gradient(135deg,var(--magenta),var(--cian)); color:#fff; font-size:9.5px; font-weight:800;
-            display:flex; align-items:center; justify-content:center;">3</span>
+            display:none; align-items:center; justify-content:center;">0</span>
         </div>
         <div class="btn-icono" id="btnMenuHeader">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.2" fill="currentColor" stroke="none"/></svg>
@@ -257,7 +257,7 @@
     <div class="tab activo">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5C3 7.4 6.8 4 11.5 4S20 7.4 20 11.5 16.2 19 11.5 19c-1 0-2-.2-2.9-.5L4 20l1.2-3.5C3.8 15 3 13.3 3 11.5Z"/></svg>
       <span>Chats</span>
-      <div class="badge-tab">5</div>
+      <div class="badge-tab" id="badgeTabChats" style="display:none;">0</div>
     </div>
     <div class="tab" id="tabVideo">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg>
@@ -354,6 +354,8 @@
     }
     window.miIdLista = sesionData.session.user.id;
     await cargarChatsReales();
+    await cargarNotificacionesReales();
+    suscribirseANotificacionesNuevas();
   });
 
   async function cargarChatsReales(){
@@ -440,6 +442,14 @@
     }
 
     chats = [...chatsIndividuales, ...chatsGrupales];
+
+    const totalNoLeidos = chats.reduce((acc, c) => acc + (c.noLeidos || 0), 0);
+    const badgeTab = document.getElementById('badgeTabChats');
+    if(badgeTab){
+      badgeTab.style.display = totalNoLeidos > 0 ? 'flex' : 'none';
+      badgeTab.textContent = totalNoLeidos;
+    }
+
     render();
   }
 
@@ -607,18 +617,7 @@
   const panelNotifLista = document.getElementById('panelNotifLista');
   const badgeNotif = document.getElementById('badgeNotif');
 
-  let notifsRecientes = [
-    { id:1, autor:'gonza_lp', texto:'Dale, te aviso cuando llego', hora:'14:32', leida:false },
-    { id:2, autor:'nachodev', texto:'quiere agregarte como contacto', hora:'13:10', leida:false, tipo:'solicitud', pendiente:true },
-    { id:3, autor:'flor.sordas', texto:'Videollamada perdida', hora:'12:45', leida:false },
-    { id:4, autor:'Asado del domingo', texto:'martu_bsas: Yo llevo el hielo', hora:'11:20', leida:true },
-    { id:5, autor:'sole_lsa', texto:'aceptó tu solicitud de contacto', hora:'10:05', leida:true },
-    { id:6, autor:'juan_pm', texto:'Jaja buenísimo 😂', hora:'Ayer', leida:true },
-    { id:7, autor:'Sordos Argentinos', texto:'Nueva actualización disponible', hora:'Ayer', leida:true },
-    { id:8, autor:'fede_cowork', texto:'Subí el archivo nuevo', hora:'Lun', leida:true },
-    { id:9, autor:'Familia ❤️', texto:'Mamá: Llegué bien, beso', hora:'Lun', leida:true },
-    { id:10, autor:'Grupo Trabajo Cowork', texto:'Fede: Subí el archivo nuevo', hora:'Lun', leida:true }
-  ];
+  let notifsRecientes = [];
 
   function actualizarBadgeNotif(){
     const noLeidas = notifsRecientes.filter(n => !n.leida).length;
@@ -628,13 +627,19 @@
 
   function renderPanelNotif(){
     panelNotifLista.innerHTML = '';
+
+    if(notifsRecientes.length === 0){
+      panelNotifLista.innerHTML = '<div style="text-align:center;padding:30px 16px;color:var(--texto-dim);font-size:12.5px;">No tenés notificaciones todavía.</div>';
+      return;
+    }
+
     notifsRecientes.forEach(n => {
       const item = document.createElement('div');
       item.className = 'pn-item' + (n.leida ? '' : ' no-leida');
       item.innerHTML = `
-        <div class="pn-avatar">${n.autor[0].toUpperCase()}</div>
+        <div class="pn-avatar">${(n.autor || '?')[0].toUpperCase()}</div>
         <div class="pn-texto">
-          <div class="pn-titulo">${n.autor}</div>
+          <div class="pn-titulo">${n.autor || 'Sordos Argentinos'}</div>
           <div class="pn-sub">${n.texto}</div>
           ${n.pendiente ? `<div class="pn-acciones">
             <button class="pn-btn aceptar" data-accion="aceptar" data-id="${n.id}">Aceptar</button>
@@ -644,8 +649,11 @@
         <div class="pn-hora">${n.hora}</div>
       `;
       if(!n.pendiente){
-        item.addEventListener('click', () => {
+        item.addEventListener('click', async () => {
           n.leida = true;
+          if(window.sbLista && n.dbId){
+            await window.sbLista.from('notifications').update({ read: true }).eq('id', n.dbId);
+          }
           renderPanelNotif();
           actualizarBadgeNotif();
         });
@@ -654,14 +662,21 @@
     });
 
     panelNotifLista.querySelectorAll('.pn-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = +btn.dataset.id;
         const n = notifsRecientes.find(x => x.id === id);
         if(n){
+          const nuevoEstado = btn.dataset.accion === 'aceptar' ? 'accepted' : 'rejected';
+          if(window.sbLista && n.contactRowId){
+            await window.sbLista.from('contacts').update({ status: nuevoEstado === 'accepted' ? 'accepted' : 'blocked' }).eq('id', n.contactRowId);
+          }
           n.pendiente = false;
           n.leida = true;
           n.texto = btn.dataset.accion === 'aceptar' ? 'Ahora son contactos ✓' : 'Solicitud rechazada';
+          if(window.sbLista && n.dbId){
+            await window.sbLista.from('notifications').update({ read: true }).eq('id', n.dbId);
+          }
           renderPanelNotif();
           actualizarBadgeNotif();
         }
@@ -672,17 +687,20 @@
   }
 
   function borrarNotif(id, elemento){
-    if(elemento){
-      elemento.classList.add('borrando');
-      setTimeout(() => {
-        notifsRecientes = notifsRecientes.filter(n => n.id !== id);
-        renderPanelNotif();
-        actualizarBadgeNotif();
-      }, 200);
-    } else {
-      notifsRecientes = notifsRecientes.filter(n => n.id !== id);
+    const n = notifsRecientes.find(x => x.id === id);
+    const ejecutar = async () => {
+      notifsRecientes = notifsRecientes.filter(x => x.id !== id);
+      if(window.sbLista && n && n.dbId){
+        await window.sbLista.from('notifications').delete().eq('id', n.dbId);
+      }
       renderPanelNotif();
       actualizarBadgeNotif();
+    };
+    if(elemento){
+      elemento.classList.add('borrando');
+      setTimeout(ejecutar, 200);
+    } else {
+      ejecutar();
     }
   }
 
@@ -713,60 +731,68 @@
     });
   }
 
-  document.getElementById('limpiarPanel').addEventListener('click', () => {
+  document.getElementById('limpiarPanel').addEventListener('click', async () => {
+    if(window.sbLista && window.miIdLista){
+      await window.sbLista.from('notifications').delete().eq('user_id', window.miIdLista);
+    }
     notifsRecientes = [];
     renderPanelNotif();
     actualizarBadgeNotif();
   });
 
-  // ===== llegan notificaciones nuevas en cualquier momento, esté o no abierto el panel =====
-  let idNotifSiguiente = 100;
-  const posiblesNuevas = [
-    { autor:'flor.sordas', texto:'Te mandó un audio' },
-    { autor:'Familia ❤️', texto:'Papá: ¿A qué hora llegás?' },
-    { autor:'juan_pm', texto:'Videollamada perdida' },
-    { autor:'Grupo Trabajo Cowork', texto:'Fede: Reunión a las 15hs' },
-    { autor:'martu_bsas', texto:'Te etiquetó en una foto' }
-  ];
+  // ===== cargar notificaciones reales y escuchar las nuevas en vivo =====
+  async function cargarNotificacionesReales(){
+    if(!window.sbLista || !window.miIdLista) return;
+    const { data, error } = await window.sbLista
+      .from('notifications')
+      .select('id, type, title, body, related_id, read, created_at')
+      .eq('user_id', window.miIdLista)
+      .order('created_at', { ascending: false })
+      .limit(30);
 
-  function llegaNotifNueva(){
-    const base = posiblesNuevas[Math.floor(Math.random()*posiblesNuevas.length)];
-    const nueva = {
-      id: idNotifSiguiente++,
-      autor: base.autor,
-      texto: base.texto,
-      hora: new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}),
-      leida: false,
-      nueva: true
-    };
-    notifsRecientes.unshift(nueva);
+    if(error){ console.error('error cargando notificaciones', error); return; }
+
+    notifsRecientes = (data || []).map(fila => ({
+      id: fila.id,
+      dbId: fila.id,
+      autor: fila.title || 'Sordos Argentinos',
+      texto: fila.body || '',
+      hora: new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}),
+      leida: !!fila.read,
+      pendiente: fila.type === 'solicitud' && !fila.read,
+      contactRowId: fila.related_id
+    }));
+
     renderPanelNotif();
     actualizarBadgeNotif();
-
-    const btnCampana = document.getElementById('btnNotificaciones');
-    btnCampana.classList.remove('recien-llegada');
-    void btnCampana.offsetWidth;
-    btnCampana.classList.add('recien-llegada');
-
-    // resalta la que acaba de llegar y después le saca la marca
-    const primerItem = panelNotifLista.querySelector('.pn-item');
-    if(primerItem){
-      primerItem.classList.add('recien-llegada');
-      setTimeout(() => primerItem.classList.remove('recien-llegada'), 1600);
-    }
   }
 
-  // simula que cada tanto (entre 15 y 30 segundos) llega algo nuevo, como pasaría de verdad
-  function programarProximaNotif(){
-    const espera = 15000 + Math.random()*15000;
-    setTimeout(() => {
-      llegaNotifNueva();
-      programarProximaNotif();
-    }, espera);
+  function suscribirseANotificacionesNuevas(){
+    if(!window.sbLista || !window.miIdLista) return;
+    window.sbLista
+      .channel('notifs-' + window.miIdLista)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${window.miIdLista}` }, (payload) => {
+        const fila = payload.new;
+        notifsRecientes.unshift({
+          id: fila.id,
+          dbId: fila.id,
+          autor: fila.title || 'Sordos Argentinos',
+          texto: fila.body || '',
+          hora: new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}),
+          leida: false,
+          pendiente: fila.type === 'solicitud',
+          contactRowId: fila.related_id
+        });
+        renderPanelNotif();
+        actualizarBadgeNotif();
+
+        const btnCampana = document.getElementById('btnNotificaciones');
+        btnCampana.classList.remove('recien-llegada');
+        void btnCampana.offsetWidth;
+        btnCampana.classList.add('recien-llegada');
+      })
+      .subscribe();
   }
-  programarProximaNotif();
-  renderPanelNotif();
-  actualizarBadgeNotif();
 
   function abrirPanelNotif(){
     overlayNotif.classList.add('activo');
@@ -778,14 +804,17 @@
   }
   overlayNotif.addEventListener('click', cerrarPanelNotif);
 
-  document.getElementById('marcarLeidasPanel').addEventListener('click', () => {
+  document.getElementById('marcarLeidasPanel').addEventListener('click', async () => {
     notifsRecientes.forEach(n => n.leida = true);
+    if(window.sbLista && window.miIdLista){
+      await window.sbLista.from('notifications').update({ read: true }).eq('user_id', window.miIdLista);
+    }
     renderPanelNotif();
     actualizarBadgeNotif();
   });
   document.getElementById('btnVerTodasNotif').addEventListener('click', () => {
     cerrarPanelNotif();
-    console.log('ir a centro-notificaciones.html (pantalla completa)');
+    window.location.href = 'centro-notificaciones.html';
   });
 
   document.getElementById('btnNotificaciones').addEventListener('click', abrirPanelNotif);
