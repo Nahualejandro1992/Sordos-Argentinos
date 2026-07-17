@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Info del contacto</title>
+<style>
+  :root{ --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff; --texto:#f4e9ff; --texto-dim:#b79ad1; --error:#ff5470; }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); overflow:hidden; background:var(--violeta-bg); }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.15; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  .pantalla{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .header{ display:flex; align-items:center; padding:10px 8px; flex-shrink:0; }
+  .btn-atras{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.05); }
+  .btn-atras svg{ width:20px; height:20px; color:var(--texto); }
+
+  .perfil-top{ display:flex; flex-direction:column; align-items:center; padding:6px 20px 22px; }
+  .avatar{ width:96px; height:96px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; }
+  .avatar span{ font-size:32px; font-weight:800; color:#fff; }
+  .nombre{ margin-top:14px; font-size:19px; font-weight:800; color:var(--texto); display:flex; align-items:center; gap:6px; }
+  .nombre svg{ width:16px; height:16px; color:var(--cian); }
+  .bio{ margin-top:5px; font-size:13px; color:var(--texto-dim); text-align:center; }
+
+  .acciones{ display:flex; gap:24px; margin-top:18px; }
+  .btn-accion-circ{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .btn-accion-circ .icono{ width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; }
+  .btn-accion-circ .icono svg{ width:21px; height:21px; color:var(--texto); }
+  .btn-accion-circ span{ font-size:11px; color:var(--texto-dim); font-weight:600; }
+
+  .contenido{ padding:0 20px 30px; }
+  .seccion{ margin-top:22px; }
+  .seccion-titulo{ font-size:12px; font-weight:700; color:var(--texto-dim); letter-spacing:.6px; text-transform:uppercase; margin-bottom:10px; }
+
+  .grupo{ border-radius:16px; overflow:hidden; background:rgba(255,255,255,.04); }
+  .item{ display:flex; align-items:center; gap:14px; padding:14px; min-height:52px; border-bottom:1px solid rgba(255,255,255,.05); }
+  .item:last-child{ border-bottom:none; }
+  .item .icono-item{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .item .icono-item svg{ width:18px; height:18px; }
+  .item .texto{ flex:1; min-width:0; }
+  .item .titulo-item{ font-size:14.5px; font-weight:600; color:var(--texto); }
+  .item .sub-item{ margin-top:1px; font-size:12px; color:var(--texto-dim); }
+  .chevron{ width:17px; height:17px; color:var(--texto-dim); flex-shrink:0; }
+  .cantidad{ font-size:13px; color:var(--texto-dim); font-weight:700; }
+
+  .switch{ width:46px; height:27px; border-radius:14px; background:rgba(255,255,255,.12); position:relative; flex-shrink:0; }
+  .switch::after{ content:""; position:absolute; top:2.5px; left:2.5px; width:22px; height:22px; border-radius:50%; background:#fff; transition:transform .2s ease; }
+  .switch.on{ background:linear-gradient(135deg,var(--magenta),var(--cian)); }
+  .switch.on::after{ transform:translateX(19px); }
+
+  .icono-item.cian{ background:rgba(23,242,255,.14); color:var(--cian); }
+  .icono-item.magenta{ background:rgba(255,46,196,.14); color:var(--magenta); }
+  .icono-item.amarillo{ background:rgba(246,180,14,.14); color:#f6b40e; }
+  .icono-item.rojo{ background:rgba(255,84,112,.14); color:var(--error); }
+
+  .item-peligro .titulo-item{ color:var(--error); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+  <div class="pantalla">
+    <div class="header">
+      <div class="btn-atras" id="btnAtras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    </div>
+
+    <div class="perfil-top">
+      <div class="avatar" id="avatarContacto"><span id="letraAvatarContacto">G</span></div>
+      <div class="nombre"><span id="nombreContacto">gonza_lp</span> <svg id="tildeContacto" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <div class="bio" id="bioContacto">Fotógrafo amateur, mate y rock nacional 🎸</div>
+
+      <div class="acciones">
+        <div class="btn-accion-circ" id="btnMensaje"><div class="icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5C3 7.4 6.8 4 11.5 4S20 7.4 20 11.5 16.2 19 11.5 19c-1 0-2-.2-2.9-.5L4 20l1.2-3.5C3.8 15 3 13.3 3 11.5Z"/></svg></div><span>Mensaje</span></div>
+        <div class="btn-accion-circ" id="btnLlamar"><div class="icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg></div><span>Llamar</span></div>
+        <div class="btn-accion-circ" id="btnBuscarChat"><div class="icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><span>Buscar</span></div>
+      </div>
+    </div>
+
+    <div class="contenido">
+      <div class="seccion">
+        <div class="seccion-titulo">Contenido compartido</div>
+        <div class="grupo">
+          <div class="item" id="irMultimedia">
+            <div class="icono-item cian"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+            <div class="texto"><div class="titulo-item">Fotos y videos</div></div>
+            <span class="cantidad">14</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="item" id="irEnlaces">
+            <div class="icono-item magenta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.5-1.5"/></svg></div>
+            <div class="texto"><div class="titulo-item">Enlaces compartidos</div></div>
+            <span class="cantidad">3</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="item" id="irDocumentos">
+            <div class="icono-item amarillo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg></div>
+            <div class="texto"><div class="titulo-item">Documentos</div></div>
+            <span class="cantidad">1</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="item" id="irMensajesGuardados">
+            <div class="icono-item cian"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg></div>
+            <div class="texto"><div class="titulo-item">Mensajes guardados</div></div>
+            <span class="cantidad">2</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <div class="seccion-titulo">Opciones del chat</div>
+        <div class="grupo">
+          <div class="item">
+            <div class="icono-item magenta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div>
+            <div class="texto"><div class="titulo-item">Silenciar notificaciones</div></div>
+            <div class="switch" id="switchSilenciar"></div>
+          </div>
+          <div class="item">
+            <div class="icono-item cian"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5c0 5 4 8.5 9 10.5 5-2 9-5.5 9-10.5v-5L12 2Z"/></svg></div>
+            <div class="texto"><div class="titulo-item">Cifrado de extremo a extremo</div><div class="sub-item">Solo vos y gonza_lp pueden leer los mensajes</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <div class="grupo">
+          <div class="item item-peligro" id="btnReportar">
+            <div class="icono-item rojo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+            <div class="texto"><div class="titulo-item">Reportar</div></div>
+          </div>
+          <div class="item item-peligro" id="btnBloquear">
+            <div class="icono-item rojo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m4.9 4.9 14.2 14.2"/></svg></div>
+            <div class="texto"><div class="titulo-item">Bloquear a @gonza_lp</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const idContacto = params.get('id') || params.get('with');
+
+  async function iniciar(){
+    if(!idContacto){
+      console.warn('Falta el parámetro ?id= en la URL, se muestran datos de ejemplo.');
+      return;
+    }
+    if(typeof supabase === 'undefined') return;
+
+    const sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+
+    const { data: perfil, error } = await sb.from('profiles').select('name, bio, avatar_url, status').eq('id', idContacto).single();
+    if(error || !perfil){
+      console.warn('No se pudo cargar el perfil real:', error && error.message);
+      return;
+    }
+
+    document.getElementById('nombreContacto').textContent = perfil.name;
+    document.getElementById('letraAvatarContacto').textContent = perfil.name[0].toUpperCase();
+    document.getElementById('bioContacto').textContent = perfil.bio || 'Todavía no escribió una bio.';
+    document.getElementById('tildeContacto').style.display = perfil.status === 'verified' ? 'inline' : 'none';
+
+    if(perfil.avatar_url){
+      document.getElementById('avatarContacto').innerHTML = `<img src="${perfil.avatar_url}" alt="Foto de perfil" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    }
+
+    document.querySelectorAll('.item-peligro .titulo-item').forEach(el => {
+      el.textContent = el.textContent.includes('Bloquear') ? `Bloquear a @${perfil.name}` : el.textContent;
+    });
+    const subEncriptado = document.querySelector('.item .sub-item');
+    if(subEncriptado && subEncriptado.textContent.includes('gonza_lp')){
+      subEncriptado.textContent = `Solo vos y ${perfil.name} pueden leer los mensajes`;
+    }
+  }
+  iniciar();
+</script>
+<script>
+  document.querySelectorAll('.switch').forEach(sw => sw.addEventListener('click', () => sw.classList.toggle('on')));
+  document.getElementById('btnAtras').addEventListener('click', () => console.log('volver al chat'));
+  document.getElementById('btnMensaje').addEventListener('click', () => console.log('volver al chat'));
+  document.getElementById('btnLlamar').addEventListener('click', () => console.log('iniciar videollamada'));
+  document.getElementById('btnBuscarChat').addEventListener('click', () => console.log('buscar dentro de este chat'));
+  document.getElementById('irMultimedia').addEventListener('click', () => console.log('ver fotos y videos compartidos'));
+  document.getElementById('irEnlaces').addEventListener('click', () => console.log('ver enlaces compartidos'));
+  document.getElementById('irDocumentos').addEventListener('click', () => console.log('ver documentos compartidos'));
+  document.getElementById('irMensajesGuardados').addEventListener('click', () => console.log('ver mensajes guardados de este chat'));
+  document.getElementById('btnReportar').addEventListener('click', () => console.log('reportar'));
+  document.getElementById('btnBloquear').addEventListener('click', () => console.log('bloquear'));
+</script>
+</body>
+</html>

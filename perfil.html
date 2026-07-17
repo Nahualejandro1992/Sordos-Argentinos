@@ -125,7 +125,7 @@
       </div>
 
       <div class="campo">
-        <label for="nombre">Nombre de usuario</label>
+        <label for="nombre">Nombre de usuario <svg id="tildeVerificadoNombre" style="display:none; width:14px; height:14px; color:var(--cian); vertical-align:-2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></label>
         <div class="campo-input">
           <input id="nombre" type="text" value="martu_bsas" autocapitalize="off" />
         </div>
@@ -227,6 +227,7 @@
       badgeEstado.classList.add('verificado');
       textoBadge.textContent = 'Cuenta verificada';
       textoEstado.textContent = 'Tu cuenta ya fue aprobada por un admin. ¡Disfrutá la app!';
+      document.getElementById('tildeVerificadoNombre').style.display = 'inline';
     } else if(perfil.status === 'rejected'){
       textoBadge.textContent = 'Cuenta rechazada';
       textoEstado.textContent = 'Tu cuenta fue rechazada. Contactá a un admin si creés que fue un error.';
