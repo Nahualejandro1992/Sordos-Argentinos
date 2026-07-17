@@ -306,16 +306,110 @@
 </div>
 
 <script>
-  const chats = [
-    { id:1, nombre:'gonza_lp', verificado:true, online:true, grupo:false, ultimoMsg:'Dale, te aviso cuando llego', hora:'14:32', noLeidos:2, tipo:'texto' },
-    { id:2, nombre:'Asado del domingo 🍖', verificado:false, online:false, grupo:true, ultimoMsg:'Martu: Yo llevo el hielo', hora:'13:10', noLeidos:5, tipo:'texto' },
-    { id:3, nombre:'flor.sordas', verificado:true, online:true, grupo:false, ultimoMsg:'', hora:'12:45', noLeidos:0, tipo:'video' },
-    { id:4, nombre:'nachodev', verificado:false, online:false, grupo:false, ultimoMsg:'📎 captura_pantalla.png', hora:'Ayer', noLeidos:0, tipo:'archivo' },
-    { id:5, nombre:'Familia ❤️', verificado:false, online:false, grupo:true, ultimoMsg:'Mamá: Llegué bien, beso', hora:'Ayer', noLeidos:0, tipo:'texto' },
-    { id:6, nombre:'sole_lsa', verificado:true, online:false, grupo:false, ultimoMsg:'Perfecto, nos vemos ahí', hora:'Lun', noLeidos:0, tipo:'texto' },
-    { id:7, nombre:'Grupo Trabajo Cowork', verificado:false, online:false, grupo:true, ultimoMsg:'Fede: Subí el archivo nuevo', hora:'Lun', noLeidos:0, tipo:'texto' },
-    { id:8, nombre:'juan_pm', verificado:false, online:true, grupo:false, ultimoMsg:'Jaja buenísimo 😂', hora:'Dom', noLeidos:0, tipo:'texto' }
-  ];
+  let chats = [];
+
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  function avisarBannerChats(texto){
+    let b = document.getElementById('bannerDiagnosticoChats');
+    if(!b){
+      b = document.createElement('div');
+      b.id = 'bannerDiagnosticoChats';
+      b.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; font-family:sans-serif; text-align:center; line-height:1.5;';
+      document.body.prepend(b);
+    }
+    b.textContent = texto;
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined'){
+      avisarBannerChats('⚠️ No se pudo cargar la conexión a Supabase. Revisá tu internet.');
+      return;
+    }
+    const sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+    window.sbLista = sb;
+
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session){
+      avisarBannerChats('⚠️ Necesitás iniciar sesión primero. Te llevamos al login...');
+      setTimeout(() => window.location.href = 'login.html', 1500);
+      return;
+    }
+    window.miIdLista = sesionData.session.user.id;
+    await cargarChatsReales();
+  });
+
+  async function cargarChatsReales(){
+    const miId = window.miIdLista;
+    const sb = window.sbLista;
+
+    const { data: contactosData, error: errorContactos } = await sb
+      .from('contacts')
+      .select('user_id, contact_id, status, perfil_user:user_id(id,name), perfil_contact:contact_id(id,name)')
+      .eq('status', 'accepted')
+      .or(`user_id.eq.${miId},contact_id.eq.${miId}`);
+
+    if(errorContactos){
+      avisarBannerChats('Error cargando contactos: ' + errorContactos.message);
+      return;
+    }
+
+    const contactosReales = (contactosData || []).map(row => {
+      const soyYoElUser = row.user_id === miId;
+      const otro = soyYoElUser ? row.perfil_contact : row.perfil_user;
+      return otro;
+    }).filter(Boolean);
+
+    // para cada contacto, buscamos el último mensaje y cuántos no leídos hay
+    chats = await Promise.all(contactosReales.map(async (otro) => {
+      const { data: ultimosMsjs } = await sb
+        .from('messages')
+        .select('content, created_at, sender_id, read_at')
+        .or(`and(sender_id.eq.${miId},receiver_id.eq.${otro.id}),and(sender_id.eq.${otro.id},receiver_id.eq.${miId})`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      const { count: noLeidosCount } = await sb
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('sender_id', otro.id)
+        .eq('receiver_id', miId)
+        .is('read_at', null);
+
+      const ultimo = ultimosMsjs && ultimosMsjs[0];
+      return {
+        id: otro.id,
+        nombre: otro.name,
+        verificado: false,
+        online: false,
+        grupo: false,
+        ultimoMsg: ultimo ? ultimo.content : 'Ya son contactos — ¡mandale un mensaje!',
+        hora: ultimo ? new Date(ultimo.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}) : '',
+        noLeidos: noLeidosCount || 0,
+        tipo: 'texto'
+      };
+    }));
+
+    render();
+  }
+
 
   const lista = document.getElementById('lista');
 
@@ -443,7 +537,12 @@
           return;
         }
         if(item.classList.contains('deslizado')){ item.classList.remove('deslizado'); return; }
-        console.log('abrir chat', id);
+        const chatObj = chats.find(c => String(c.id) === String(id));
+        if(chatObj && !chatObj.grupo){
+          window.location.href = `chat-individual.html?with=${chatObj.id}&name=${encodeURIComponent(chatObj.nombre)}`;
+        } else {
+          console.log('abrir chat grupal', id);
+        }
       });
 
       // presión larga también activa el modo selección, marcando ese chat
@@ -469,7 +568,7 @@
     });
   }
 
-  document.getElementById('btnNuevoChat').addEventListener('click', () => console.log('nuevo chat'));
+  document.getElementById('btnNuevoChat').addEventListener('click', () => { window.location.href = 'nuevo-chat.html'; });
   // ===== panel desplegable de notificaciones =====
   const overlayNotif = document.getElementById('overlayNotif');
   const panelNotif = document.getElementById('panelNotif');
@@ -658,9 +757,9 @@
   });
 
   document.getElementById('btnNotificaciones').addEventListener('click', abrirPanelNotif);
-  document.getElementById('tabVideo').addEventListener('click', () => console.log('ir a videollamadas'));
-  document.getElementById('tabNoticias').addEventListener('click', () => console.log('ir a noticias'));
-  document.getElementById('tabAjustes').addEventListener('click', () => console.log('ir a ajustes'));
+  document.getElementById('tabVideo').addEventListener('click', () => console.log('ir a videollamadas (aún no conectado)'));
+  document.getElementById('tabNoticias').addEventListener('click', () => { window.location.href = 'noticias.html'; });
+  document.getElementById('tabAjustes').addEventListener('click', () => { window.location.href = 'ajustes.html'; });
 
   // ===== menú desplegable "•••" =====
   const overlayMenu = document.getElementById('overlayMenu');

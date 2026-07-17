@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Ajustes</title>
+<style>
+  :root{
+    --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff;
+    --texto:#f4e9ff; --texto-dim:#b79ad1; --error:#ff5470;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; overscroll-behavior:none; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+    padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+    overflow:hidden; background:var(--violeta-bg);
+  }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.22; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  .pantalla{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column;
+    overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+
+  .header{ display:flex; align-items:center; gap:6px; padding:10px 8px; flex-shrink:0; }
+  .btn-atras{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.05); }
+  .btn-atras:active{ background:rgba(255,255,255,.12); }
+  .btn-atras svg{ width:20px; height:20px; }
+  .header h2{ font-size:19px; font-weight:800; color:var(--texto); }
+
+  .contenido{ flex:1; padding:6px 20px 40px; }
+
+  .perfil-mini{ display:flex; align-items:center; gap:14px; padding:14px; margin-top:6px;
+    background:rgba(255,255,255,.04); border-radius:16px; }
+  .perfil-mini .avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian)); display:flex; align-items:center; justify-content:center; }
+  .perfil-mini .avatar span{ font-size:19px; font-weight:800; color:#fff; }
+  .perfil-mini .info{ flex:1; min-width:0; }
+  .perfil-mini .nombre{ font-size:15.5px; font-weight:700; color:var(--texto); display:flex; align-items:center; gap:5px; }
+  .perfil-mini .nombre svg{ width:15px; height:15px; color:var(--cian); flex-shrink:0; }
+  .perfil-mini .estado{ margin-top:2px; font-size:12.5px; color:var(--texto-dim); }
+  .perfil-mini .chevron{ width:18px; height:18px; color:var(--texto-dim); flex-shrink:0; }
+
+  .seccion{ margin-top:26px; }
+  .seccion-titulo{ font-size:12px; font-weight:700; color:var(--texto-dim); letter-spacing:.6px; text-transform:uppercase; margin-bottom:10px; padding-left:4px; }
+
+  .grupo{ border-radius:16px; overflow:hidden; background:rgba(255,255,255,.04); }
+  .item{ display:flex; align-items:center; gap:14px; padding:14px; min-height:52px;
+    border-bottom:1px solid rgba(255,255,255,.05); }
+  .item:last-child{ border-bottom:none; }
+  .item:active{ background:rgba(255,255,255,.05); }
+  .item .icono-item{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .item .icono-item svg{ width:18px; height:18px; }
+  .item .texto{ flex:1; min-width:0; }
+  .item .titulo-item{ font-size:14.5px; font-weight:600; color:var(--texto); }
+  .item .sub-item{ margin-top:1px; font-size:12px; color:var(--texto-dim); }
+  .item .chevron{ width:17px; height:17px; color:var(--texto-dim); flex-shrink:0; }
+  .item .valor-item{ font-size:13px; color:var(--texto-dim); }
+
+  .switch{ width:46px; height:27px; border-radius:14px; background:rgba(255,255,255,.12); position:relative; flex-shrink:0; }
+  .switch::after{ content:""; position:absolute; top:2.5px; left:2.5px; width:22px; height:22px; border-radius:50%;
+    background:#fff; transition:transform .2s ease; }
+  .switch.on{ background:linear-gradient(135deg,var(--magenta),var(--cian)); }
+  .switch.on::after{ transform:translateX(19px); }
+
+  .icono-item.violeta{ background:rgba(114,9,183,.18); color:#c07dff; }
+  .icono-item.cian{ background:rgba(23,242,255,.14); color:var(--cian); }
+  .icono-item.magenta{ background:rgba(255,46,196,.14); color:var(--magenta); }
+  .icono-item.amarillo{ background:rgba(246,180,14,.14); color:#f6b40e; }
+  .icono-item.rojo{ background:rgba(255,84,112,.14); color:var(--error); }
+
+  .item-cerrar{ margin-top:24px; }
+  .item-cerrar .titulo-item{ color:var(--error); }
+
+  .version{ margin-top:26px; text-align:center; font-size:11.5px; color:rgba(183,154,209,.5); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+
+  <div class="pantalla">
+    <div class="header">
+      <div class="btn-atras" id="btnAtras">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f4e9ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </div>
+      <h2>Ajustes</h2>
+    </div>
+
+    <div class="contenido">
+      <div class="perfil-mini" id="irPerfil">
+        <div class="avatar"><span id="letraAvatarAjustes">M</span></div>
+        <div class="info">
+          <div class="nombre">
+            <span id="nombreUsuarioAjustes">martu_bsas</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+          </div>
+          <div class="estado">Ver tu perfil</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+
+      <!-- HERRAMIENTAS -->
+      <div class="seccion">
+        <div class="seccion-titulo">Herramientas</div>
+        <div class="grupo">
+          <div class="item">
+            <div class="icono-item cian">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M9 22h6"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Voz a texto</div><div class="sub-item">Transcripción en vivo, modo cara a cara</div></div>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="item">
+            <div class="icono-item magenta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-4a2 2 0 0 1 2-2h1V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2h1a2 2 0 0 1 2 2v4"/><path d="M4 14h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4Z"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Detector de sonidos</div><div class="sub-item">Alertas visuales para timbre, alarmas, etc.</div></div>
+            <div class="switch on"></div>
+          </div>
+          <div class="item">
+            <div class="icono-item amarillo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Videollamada</div><div class="sub-item">Subtítulos en vivo, hasta 8 personas</div></div>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERSONALIZACIÓN -->
+      <div class="seccion">
+        <div class="seccion-titulo">Personalización</div>
+        <div class="grupo">
+          <div class="item">
+            <div class="icono-item violeta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".6" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".6" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".6" fill="currentColor"/><path d="M12 2a10 10 0 1 0 0 20c1.7 0 2-1 1.3-2.2-.6-1-.1-2.3 1.2-2.3H17a3 3 0 0 0 3-3c0-6-3.6-9.5-8-12.5Z"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Tema y colores</div><div class="sub-item">Vaporwave, cyberpunk, Buenos Aires y más</div></div>
+            <span class="valor-item">Neón Miami</span>
+          </div>
+          <div class="item">
+            <div class="icono-item cian">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 15l4.5-4.5a2 2 0 0 1 2.8 0L15 15M13 13l1.5-1.5a2 2 0 0 1 2.8 0L21 15"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Fondo animado</div><div class="sub-item">Matrix, ecualizador, aurora y más</div></div>
+            <span class="valor-item">Aurora</span>
+          </div>
+          <div class="item">
+            <div class="icono-item magenta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4" transform="rotate(45 12 12)"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Forma del avatar</div><div class="sub-item">Diamante, estrella, escudo y más</div></div>
+            <span class="valor-item">Círculo</span>
+          </div>
+          <div class="item">
+            <div class="icono-item cian">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Mostrar mi tema a otros</div><div class="sub-item">Si lo apagás, tu paleta/fondo/avatar quedan solo para vos</div></div>
+            <div class="switch on" id="switchTemaPublico"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRIVACIDAD -->
+      <div class="seccion">
+        <div class="seccion-titulo">Privacidad y notificaciones</div>
+        <div class="grupo">
+          <div class="item">
+            <div class="icono-item verde" style="background:rgba(91,255,160,.12);color:#5bffa0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5c0 5 4 8.5 9 10.5 5-2 9-5.5 9-10.5v-5L12 2Z"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Privacidad</div><div class="sub-item">Quién puede verte y contactarte</div></div>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="item">
+            <div class="icono-item amarillo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Notificaciones</div><div class="sub-item">Visuales y por sirena para urgentes</div></div>
+            <div class="switch on"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUENTA -->
+      <div class="seccion">
+        <div class="seccion-titulo">Cuenta</div>
+        <div class="grupo">
+          <div class="item">
+            <div class="icono-item cian">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1.3.9-1.3 1.7v.3"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Ayuda</div><div class="sub-item">Preguntas frecuentes y contacto</div></div>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+
+        <div class="grupo item-cerrar">
+          <div class="item" id="btnCerrarSesion">
+            <div class="icono-item rojo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Cerrar sesión</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="version">Sordos Argentinos · v0.1 (prototipo)</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined') return;
+    const sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+    window.sbAjustes = sb;
+
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session) return; // si no hay sesión, se queda con los datos de ejemplo
+
+    const { data: miPerfil } = await sb.from('profiles').select('name, is_admin').eq('id', sesionData.session.user.id).single();
+    if(miPerfil){
+      document.getElementById('nombreUsuarioAjustes').textContent = miPerfil.name;
+      document.getElementById('letraAvatarAjustes').textContent = miPerfil.name[0].toUpperCase();
+      if(miPerfil.is_admin){
+        const itemAdmin = document.createElement('div');
+        itemAdmin.className = 'item';
+        itemAdmin.id = 'btnPanelAdmin';
+        itemAdmin.innerHTML = `
+          <div class="icono-item amarillo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5c0 5 4 8.5 9 10.5 5-2 9-5.5 9-10.5v-5L12 2Z"/></svg></div>
+          <div class="texto"><div class="titulo-item">Panel de administración</div><div class="sub-item">Aprobar cuentas nuevas</div></div>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        `;
+        itemAdmin.addEventListener('click', () => { window.location.href = 'admin-panel.html'; });
+        const perfilMini = document.getElementById('irPerfil');
+        perfilMini.parentNode.insertBefore(itemAdmin, perfilMini.nextSibling);
+      }
+    }
+  });
+
+  document.querySelectorAll('.switch').forEach(sw => {
+    sw.addEventListener('click', () => sw.classList.toggle('on'));
+  });
+
+  document.getElementById('btnAtras').addEventListener('click', () => { window.location.href = 'chats-lista.html'; });
+  document.getElementById('irPerfil').addEventListener('click', () => { window.location.href = 'perfil.html'; });
+  document.getElementById('btnCerrarSesion').addEventListener('click', async () => {
+    if(window.sbAjustes){
+      await window.sbAjustes.auth.signOut();
+    }
+    window.location.href = 'login.html';
+  });
+
+  let startX = 0;
+  document.getElementById('app').addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+  document.getElementById('app').addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if(startX < 24 && dx > 60){ window.location.href = 'chats-lista.html'; }
+  }, {passive:true});
+</script>
+</body>
+</html>
