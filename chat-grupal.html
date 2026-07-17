@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Chat</title>
+<style>
+  :root{
+    --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff;
+    --texto:#f4e9ff; --texto-dim:#b79ad1; --verde:#5bffa0;
+    --burbuja-otro:#1a0f2e; --burbuja-mia-1:#7209b7; --burbuja-mia-2:#3a86ff;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; overscroll-behavior:none; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  input, textarea{ font-size:16px; font-family:inherit; }
+
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+    overflow:hidden; background:var(--violeta-bg); display:flex; flex-direction:column;
+  }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.1; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  /* ===== header ===== */
+  .header{ position:relative; z-index:2; display:flex; align-items:center; gap:10px; padding:8px 10px;
+    background:rgba(10,0,24,.85); backdrop-filter:blur(10px); border-bottom:1px solid rgba(255,255,255,.06); flex-shrink:0; }
+  .btn-atras{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .btn-atras:active{ background:rgba(255,255,255,.08); }
+  .btn-atras svg{ width:20px; height:20px; color:var(--texto); }
+  .header-avatar{ width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:14px; flex-shrink:0; position:relative; }
+  .header-avatar.grupo{ background:linear-gradient(135deg,#ff9e00,#ff006e); }
+  .autor-msj{ font-size:11.5px; font-weight:700; margin:6px 0 2px 4px; align-self:flex-start; }
+  .header-punto-online{ position:absolute; bottom:-1px; right:-1px; width:11px; height:11px; border-radius:50%; background:var(--verde);
+    border:2px solid var(--violeta-bg); animation:pulsoOnline 1.8s ease-out infinite; }
+  @keyframes pulsoOnline{ 0%{ box-shadow:0 0 0 0 rgba(91,255,160,.7); } 70%{ box-shadow:0 0 0 6px rgba(91,255,160,0); } }
+  .header-info{ flex:1; min-width:0; }
+  .header-nombre{ font-size:15px; font-weight:700; color:var(--texto); display:flex; align-items:center; gap:4px; }
+  .header-nombre svg{ width:13px; height:13px; color:var(--cian); flex-shrink:0; }
+  .header-estado{ font-size:11.5px; color:var(--texto-dim); margin-top:1px; }
+  .header-iconos{ display:flex; gap:4px; }
+  .btn-icono{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .btn-icono:active{ background:rgba(255,255,255,.08); }
+  .btn-icono svg{ width:19px; height:19px; color:var(--texto); }
+
+  /* ===== mensajes ===== */
+  .mensajes-wrap{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; position:relative; z-index:1; }
+  .mensajes{ padding:14px 14px 10px; display:flex; flex-direction:column; gap:3px; }
+
+  .fecha-separador{ align-self:center; margin:14px 0 8px; font-size:11px; color:var(--texto-dim);
+    background:rgba(255,255,255,.05); padding:4px 12px; border-radius:12px; }
+
+  .fila-msj{ display:flex; max-width:80%; }
+  .fila-msj.mia{ align-self:flex-end; flex-direction:row-reverse; }
+  .fila-msj.otro{ align-self:flex-start; }
+  .fila-msj.agrupado{ margin-top:-1px; }
+
+  .burbuja{ padding:9px 13px; border-radius:18px; position:relative; word-wrap:break-word; margin-bottom:2px; }
+  .fila-msj.otro .burbuja{ background:var(--burbuja-otro); border-bottom-left-radius:5px; color:var(--texto); }
+  .fila-msj.mia .burbuja{ background:linear-gradient(135deg,var(--burbuja-mia-1),var(--burbuja-mia-2)); border-bottom-right-radius:5px; color:#fff; }
+  .fila-msj.agrupado.otro .burbuja{ border-bottom-left-radius:18px; border-top-left-radius:5px; }
+  .fila-msj.agrupado.mia .burbuja{ border-bottom-right-radius:18px; border-top-right-radius:5px; }
+
+  .burbuja p{ font-size:14.5px; line-height:1.4; }
+  .burbuja .hora-msj{ font-size:10px; margin-top:3px; display:flex; align-items:center; gap:3px; justify-content:flex-end; opacity:.7; }
+  .fila-msj.otro .hora-msj{ justify-content:flex-start; }
+  .burbuja .hora-msj svg{ width:13px; height:13px; }
+  .check-doble{ color:var(--cian); }
+
+  /* ===== reacciones ===== */
+  .reaccion-msj{ position:absolute; bottom:-11px; background:#150022; border:1.5px solid rgba(255,255,255,.12);
+    border-radius:11px; padding:1px 6px; font-size:12px; display:flex; align-items:center; gap:2px; }
+  .fila-msj.mia .reaccion-msj{ right:8px; }
+  .fila-msj.otro .reaccion-msj{ left:8px; }
+
+  .menu-reacciones{ position:fixed; z-index:35; background:#1a0630; border-radius:26px; padding:6px 8px;
+    display:flex; gap:2px; box-shadow:0 8px 24px rgba(0,0,0,.5); opacity:0; transform:scale(.85); transition:opacity .15s ease, transform .15s ease; pointer-events:none; }
+  .menu-reacciones.activo{ opacity:1; transform:scale(1); pointer-events:auto; }
+  .opcion-reaccion{ width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:21px; }
+  .opcion-reaccion:active{ background:rgba(255,255,255,.1); transform:scale(1.15); }
+  .overlay-reaccion{ position:fixed; inset:0; z-index:34; opacity:0; pointer-events:none; }
+  .overlay-reaccion.activo{ opacity:1; pointer-events:auto; }
+
+  .burbuja-sticker{ position:relative; display:flex; flex-direction:column; align-items:center; padding:4px; }
+  .emoji-sticker{ font-size:72px; line-height:1; filter:drop-shadow(0 4px 10px rgba(0,0,0,.4)); }
+  .hora-msj-sticker{ font-size:10px; color:var(--texto-dim); margin-top:2px; }
+  .btn-fav-sticker.sticker-en-chat{ position:absolute; top:-4px; right:-8px; width:26px; height:26px; background:rgba(21,0,34,.85);
+    border:1.5px solid rgba(255,255,255,.15); }
+  .btn-fav-sticker.sticker-en-chat svg{ width:14px; height:14px; }
+  .btn-fav-sticker.sticker-en-chat.marcado svg{ color:#f6b40e; }
+
+  .fila-msj{ position:relative; }
+  .fila-msj::before{ content:""; position:absolute; left:-34px; top:50%; transform:translateY(-50%) scale(.5);
+    width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,.08); opacity:0; transition:opacity .15s ease, transform .15s ease;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2317f2ff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 17l-5-5 5-5M4 12h11a4 4 0 0 1 4 4v1'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:center; background-size:15px; }
+  .fila-msj.lista-responder::before{ opacity:1; transform:translateY(-50%) scale(1); }
+
+  .barra-respuesta{ display:none; align-items:center; gap:10px; padding:8px 12px; margin:0 10px; background:rgba(255,255,255,.05);
+    border-left:3px solid var(--cian); border-radius:10px; }
+  .barra-respuesta.activa{ display:flex; }
+  .barra-respuesta .info-resp{ flex:1; min-width:0; }
+  .barra-respuesta .autor-resp{ font-size:12px; font-weight:700; color:var(--cian); }
+  .barra-respuesta .texto-resp{ font-size:12.5px; color:var(--texto-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:1px; }
+  .barra-respuesta .btn-cerrar-resp{ width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .barra-respuesta .btn-cerrar-resp svg{ width:14px; height:14px; color:var(--texto-dim); }
+
+  .cita-en-burbuja{ padding:6px 9px; border-radius:10px; background:rgba(0,0,0,.18); border-left:2.5px solid rgba(255,255,255,.4); margin-bottom:5px; }
+  .fila-msj.mia .cita-en-burbuja{ border-left-color:rgba(255,255,255,.6); }
+  .cita-en-burbuja .autor-cita{ font-size:11px; font-weight:700; opacity:.9; }
+  .cita-en-burbuja .texto-cita{ font-size:11.5px; opacity:.75; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* imagen en burbuja */
+  .burbuja.imagen{ padding:5px; }
+  .burbuja.imagen img{ width:100%; max-width:220px; border-radius:14px; display:block; }
+  .burbuja.imagen .hora-msj{ padding:4px 6px 0; }
+
+  /* archivo adjunto */
+  .burbuja.archivo{ display:flex; align-items:center; gap:10px; min-width:200px; }
+  .burbuja.archivo .icono-archivo{ width:38px; height:38px; border-radius:10px; background:rgba(255,255,255,.15);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .burbuja.archivo .icono-archivo svg{ width:19px; height:19px; }
+  .burbuja.archivo .info-archivo{ flex:1; min-width:0; }
+  .burbuja.archivo .nombre-archivo{ font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .burbuja.archivo .peso-archivo{ font-size:11px; opacity:.7; margin-top:1px; }
+
+  /* view once */
+  .burbuja.viewonce{ display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.06); border:1px dashed rgba(255,255,255,.25); }
+  .burbuja.viewonce svg{ width:17px; height:17px; color:var(--magenta); }
+  .burbuja.viewonce span{ font-size:13px; font-weight:600; }
+  .burbuja.viewonce.vencido{ opacity:.5; }
+  .burbuja.viewonce.vencido svg{ color:var(--texto-dim); }
+  .burbuja.imagen.viewonce-abierto{ border:1.5px solid var(--magenta); }
+  .aviso-cerrando{ padding:6px 8px 2px; font-size:10.5px; color:var(--texto-dim); text-align:center; font-style:italic; }
+
+  .header-estado{ font-size:11.5px; color:var(--texto-dim); margin-top:1px; transition:color .2s ease; }
+  .header-estado.escribiendo{ color:var(--cian); font-weight:700; display:flex; align-items:center; gap:5px;
+    text-shadow:0 0 6px rgba(23,242,255,.7); animation:parpadeoEscribiendo 1.4s ease-in-out infinite; }
+  @keyframes parpadeoEscribiendo{ 0%,100%{ text-shadow:0 0 4px rgba(23,242,255,.5); } 50%{ text-shadow:0 0 10px rgba(23,242,255,.95), 0 0 16px rgba(255,46,196,.4); } }
+  .puntos-header{ display:flex; gap:3px; }
+  .puntos-header span{ width:4px; height:4px; border-radius:50%; background:var(--cian); box-shadow:0 0 4px rgba(23,242,255,.8);
+    animation:rebotePuntoHeader 1s ease-in-out infinite; }
+  .puntos-header span:nth-child(2){ animation-delay:.15s; }
+  .puntos-header span:nth-child(3){ animation-delay:.3s; }
+  @keyframes rebotePuntoHeader{ 0%,100%{ transform:translateY(0); opacity:.5; } 50%{ transform:translateY(-3px); opacity:1; } }
+  @media (prefers-reduced-motion: reduce){ .header-estado.escribiendo, .puntos-header span{ animation:none; } }
+  @keyframes rebotePunto{ 0%,100%{ transform:translateY(0); opacity:.4; } 50%{ transform:translateY(-4px); opacity:1; } }
+
+  /* ===== barra de escritura ===== */
+  .barra-escritura{ position:relative; z-index:2; display:flex; align-items:flex-end; gap:8px; padding:8px 10px;
+    padding-bottom:calc(8px + env(safe-area-inset-bottom)); background:rgba(10,0,24,.9); backdrop-filter:blur(10px);
+    border-top:1px solid rgba(255,255,255,.06); flex-shrink:0; }
+  .btn-adjuntar{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .btn-adjuntar:active{ background:rgba(255,255,255,.08); }
+  .btn-adjuntar svg{ width:21px; height:21px; color:var(--texto-dim); }
+
+  .campo-texto-wrap{ flex:1; display:flex; align-items:flex-end; background:rgba(255,255,255,.06); border-radius:22px;
+    border:1.5px solid rgba(255,255,255,.1); padding:6px 6px 6px 16px; min-height:42px; }
+  .campo-texto-wrap textarea{ flex:1; background:transparent; border:none; outline:none; color:var(--texto);
+    resize:none; max-height:100px; line-height:1.4; padding:4px 0; }
+  .campo-texto-wrap textarea::placeholder{ color:rgba(183,154,209,.55); }
+  .btn-emoji{ width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .btn-emoji svg{ width:19px; height:19px; color:var(--texto-dim); }
+
+  .btn-enviar{ width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--magenta),var(--cian));
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 3px 10px rgba(255,46,196,.35); }
+  .btn-enviar:active{ transform:scale(.92); }
+  .btn-enviar svg{ width:19px; height:19px; color:#fff; }
+
+  /* ===== hoja de adjuntos ===== */
+  .overlay-adj{ position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:20; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  .overlay-adj.activo{ opacity:1; pointer-events:auto; }
+  .hoja-adj{ position:fixed; left:0; right:0; bottom:0; background:#150022; border-radius:20px 20px 0 0; z-index:21;
+    transform:translateY(100%); transition:transform .25s cubic-bezier(.22,.9,.28,1);
+    padding:8px 20px calc(20px + env(safe-area-inset-bottom)); }
+  .hoja-adj.activa{ transform:translateY(0); }
+  .hoja-adj .manija{ width:40px; height:4px; border-radius:3px; background:rgba(255,255,255,.2); margin:8px auto 16px; }
+  .grid-adj{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .op-adj{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .op-adj .icono{ width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; }
+  .op-adj .icono svg{ width:22px; height:22px; color:#fff; }
+  .op-adj span{ font-size:11px; font-weight:600; color:var(--texto-dim); }
+  .icono.foto{ background:linear-gradient(135deg,#ff2ec4,#7209b7); }
+  .icono.camara{ background:linear-gradient(135deg,#3a86ff,#17f2ff); }
+  .icono.archivo-op{ background:linear-gradient(135deg,#f6b40e,#ff9e00); }
+  .icono.viewonce-op{ background:linear-gradient(135deg,#5bffa0,#17f2ff); }
+
+  /* ===== panel de emojis/stickers ===== */
+  .panel-emoji{ position:relative; z-index:2; background:#0f0620; border-top:1px solid rgba(255,255,255,.06);
+    max-height:0; overflow:hidden; transition:max-height .25s ease; flex-shrink:0; }
+  .panel-emoji.abierto{ max-height:300px; }
+
+  .tabs-emoji{ display:flex; border-bottom:1px solid rgba(255,255,255,.06); }
+  .tab-emoji{ flex:1; text-align:center; padding:10px 0; font-size:13px; font-weight:700; color:var(--texto-dim);
+    position:relative; }
+  .tab-emoji.activo{ color:#fff; }
+  .tab-emoji.activo::after{ content:""; position:absolute; bottom:0; left:20%; right:20%; height:2px;
+    background:linear-gradient(90deg,var(--magenta),var(--cian)); border-radius:2px; }
+
+  .categorias-emoji{ display:flex; gap:4px; padding:8px 10px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .categorias-emoji::-webkit-scrollbar{ display:none; }
+  .cat-chip{ flex-shrink:0; padding:5px 12px; border-radius:14px; background:rgba(255,255,255,.05); font-size:12px;
+    font-weight:700; color:var(--texto-dim); }
+  .cat-chip.activo{ background:rgba(23,242,255,.15); color:var(--cian); }
+
+  .grid-emoji-wrap{ height:200px; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:4px 10px 10px; }
+  .grid-emoji{ display:grid; grid-template-columns:repeat(8, 1fr); gap:2px; }
+  .celda-emoji{ aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:22px;
+    border-radius:8px; position:relative; }
+  .celda-emoji:active{ background:rgba(255,255,255,.08); }
+  .celda-emoji .estrella-fav{ position:absolute; top:1px; right:1px; width:12px; height:12px; opacity:.85; }
+
+  .grid-stickers{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+  .celda-sticker{ aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:38px;
+    border-radius:14px; background:rgba(255,255,255,.04); position:relative; }
+  .celda-sticker:active{ background:rgba(255,255,255,.09); }
+  .btn-fav-sticker{ position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%;
+    background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; }
+  .btn-fav-sticker svg{ width:11px; height:11px; color:rgba(255,255,255,.6); }
+  .btn-fav-sticker.marcado svg{ color:#f6b40e; fill:#f6b40e; }
+
+  .titulo-mini{ font-size:11px; font-weight:700; color:var(--texto-dim); text-transform:uppercase; letter-spacing:.4px;
+    padding:6px 2px 4px; }
+  .sin-favoritos{ text-align:center; padding:30px 20px; font-size:12.5px; color:var(--texto-dim); }
+
+  /* ===== overlay de videollamada ===== */
+  .overlay-llamada{ position:fixed; inset:0; z-index:50; background:linear-gradient(180deg,#1a0630,#050014);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .25s ease; }
+  .overlay-llamada.activo{ opacity:1; pointer-events:auto; }
+  .llamada-avatar{ width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; box-shadow:0 0 40px rgba(255,46,196,.3);
+    animation:pulsoLlamada 1.6s ease-in-out infinite; }
+  @keyframes pulsoLlamada{ 0%,100%{ box-shadow:0 0 40px rgba(255,46,196,.3); } 50%{ box-shadow:0 0 60px rgba(255,46,196,.55); } }
+  .llamada-avatar span{ font-size:42px; font-weight:800; color:#fff; }
+  .llamada-nombre{ margin-top:22px; font-size:22px; font-weight:800; color:var(--texto); }
+  .llamada-estado{ margin-top:8px; font-size:14px; color:var(--texto-dim); }
+  .llamada-botones{ margin-top:60px; display:flex; gap:50px; }
+  .btn-colgar, .btn-aceptar{ width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .btn-colgar{ background:#ff3b30; box-shadow:0 4px 16px rgba(255,59,48,.4); }
+  .btn-aceptar{ background:#5bffa0; box-shadow:0 4px 16px rgba(91,255,160,.4); animation:pulsoAceptar 1.2s ease-in-out infinite; }
+  @keyframes pulsoAceptar{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.06); } }
+  .btn-colgar:active, .btn-aceptar:active{ transform:scale(.92); }
+  .btn-colgar svg{ width:26px; height:26px; color:#fff; }
+  .btn-aceptar svg{ width:26px; height:26px; color:#050014; }
+  .llamada-sub{ margin-top:10px; font-size:12px; color:var(--texto-dim); }
+  @media (prefers-reduced-motion: reduce){ .btn-aceptar{ animation:none; } }
+  @media (prefers-reduced-motion: reduce){ .llamada-avatar{ animation:none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+
+  <div class="header">
+    <div class="btn-atras" id="btnAtras">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <div class="header-avatar grupo" id="btnVerPerfil">
+      <span>🍖</span>
+    </div>
+    <div class="header-info" id="btnVerPerfil2">
+      <div class="header-nombre">Asado del domingo</div>
+      <div class="header-estado" id="estadoHeader">martu_bsas, gonza_lp, flor.sordas y 4 más</div>
+    </div>
+    <div class="header-iconos">
+      <div class="btn-icono" id="btnSimularEntrante" title="(solo prueba) simular llamada entrante">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+      </div>
+      <div class="btn-icono" id="btnLlamar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg></div>
+    </div>
+  </div>
+
+  <div class="mensajes-wrap">
+    <div class="mensajes" id="mensajes"></div>
+  </div>
+
+  <div class="barra-respuesta" id="barraRespuesta">
+    <div class="info-resp">
+      <div class="autor-resp" id="autorResp">gonza_lp</div>
+      <div class="texto-resp" id="textoResp">Mensaje citado...</div>
+    </div>
+    <div class="btn-cerrar-resp" id="btnCerrarResp">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </div>
+  </div>
+
+  <div class="barra-escritura">
+    <div class="btn-adjuntar" id="btnAdjuntar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1 12.4 20a5 5 0 0 1-7.1-7.1L14.5 3.7a3.5 3.5 0 0 1 5 5L10.3 18a2 2 0 0 1-2.8-2.8l7.9-7.9"/></svg>
+    </div>
+    <div class="campo-texto-wrap">
+      <textarea id="inputMensaje" placeholder="Escribí un mensaje..." rows="1"></textarea>
+      <div class="btn-emoji" id="btnEmoji">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+      </div>
+    </div>
+    <div class="btn-enviar" id="btnEnviar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+    </div>
+  </div>
+
+  <div class="panel-emoji" id="panelEmoji">
+    <div class="tabs-emoji">
+      <div class="tab-emoji activo" data-tab="emojis">😀 Emojis</div>
+      <div class="tab-emoji" data-tab="stickers">🎨 Stickers</div>
+      <div class="tab-emoji" data-tab="favoritos">⭐ Favoritos</div>
+    </div>
+    <div id="contenidoPanel"></div>
+  </div>
+
+  <!-- hoja de adjuntos -->
+  <div class="overlay-adj" id="overlayAdj"></div>
+  <div class="hoja-adj" id="hojaAdj">
+    <div class="manija"></div>
+    <div class="grid-adj">
+      <div class="op-adj" id="opFoto"><div class="icono foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div><span>Galería</span></div>
+      <div class="op-adj" id="opCamara"><div class="icono camara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg></div><span>Cámara</span></div>
+      <div class="op-adj" id="opArchivo"><div class="icono archivo-op"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg></div><span>Archivo</span></div>
+      <div class="op-adj" id="opViewOnce"><div class="icono viewonce-op"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></div><span>Ver una vez</span></div>
+    </div>
+  </div>
+
+  <input type="file" id="inputArchivoOculto" accept="image/*" style="display:none" />
+  <input type="file" id="inputDocumentoOculto" style="display:none" />
+  <input type="file" id="inputViewOnceOculto" accept="image/*" style="display:none" />
+
+  <div class="overlay-reaccion" id="overlayReaccion"></div>
+  <div class="menu-reacciones" id="menuReacciones">
+    <div class="opcion-reaccion" data-reaccion="❤️">❤️</div>
+    <div class="opcion-reaccion" data-reaccion="😂">😂</div>
+    <div class="opcion-reaccion" data-reaccion="😮">😮</div>
+    <div class="opcion-reaccion" data-reaccion="😢">😢</div>
+    <div class="opcion-reaccion" data-reaccion="👍">👍</div>
+    <div class="opcion-reaccion" data-reaccion="🔥">🔥</div>
+  </div>
+
+  <div class="overlay-llamada" id="overlayLlamada">
+    <div class="llamada-avatar"><span>G</span></div>
+    <div class="llamada-nombre">Asado del domingo</div>
+    <div class="llamada-estado" id="estadoLlamada">Llamando al grupo...</div>
+    <div class="llamada-sub" id="subLlamada"></div>
+    <div class="llamada-botones">
+      <div class="btn-colgar" id="btnColgar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 14 14M19 5 5 19"/></svg>
+      </div>
+      <div class="btn-aceptar" id="btnAceptar" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== conexión real a Supabase =====
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  function avisarBannerGrupo(texto){
+    let b = document.getElementById('bannerDiagnosticoGrupo');
+    if(!b){
+      b = document.createElement('div');
+      b.id = 'bannerDiagnosticoGrupo';
+      b.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; font-family:sans-serif; text-align:center; line-height:1.5;';
+      document.body.prepend(b);
+    }
+    b.textContent = texto;
+  }
+
+  const paramsGrupo = new URLSearchParams(window.location.search);
+  const grupoIdUrl = paramsGrupo.get('group');
+  const grupoNombreUrl = paramsGrupo.get('name');
+  window.miembrosPorId = {};
+
+  if(grupoNombreUrl){
+    const headerNombre = document.querySelector('.header-nombre');
+    if(headerNombre) headerNombre.textContent = grupoNombreUrl;
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined'){
+      avisarBannerGrupo('⚠️ No se pudo cargar la conexión a Supabase. Revisá tu internet.');
+      return;
+    }
+    const sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+    window.sbGrupo = sb;
+
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session){
+      avisarBannerGrupo('⚠️ Necesitás iniciar sesión primero. Te llevamos al login...');
+      setTimeout(() => window.location.href = 'login.html', 1500);
+      return;
+    }
+    window.miIdGrupo = sesionData.session.user.id;
+
+    if(!grupoIdUrl){
+      avisarBannerGrupo('⚠️ Este chat no sabe de qué grupo se trata (falta ?group= en la URL).');
+      return;
+    }
+    window.grupoIdActual = grupoIdUrl;
+
+    await cargarMiembrosGrupo();
+    await cargarMensajesGrupoReales();
+    suscribirseAMensajesGrupo();
+  });
+
+  async function cargarMiembrosGrupo(){
+    const { data, error } = await window.sbGrupo
+      .from('group_members')
+      .select('user_id, profiles:user_id(id,name)')
+      .eq('group_id', window.grupoIdActual);
+
+    if(error){ avisarBannerGrupo('Error cargando miembros: ' + error.message); return; }
+
+    (data || []).forEach(fila => {
+      if(fila.profiles) window.miembrosPorId[fila.profiles.id] = fila.profiles.name;
+    });
+
+    const headerEstado = document.getElementById('estadoHeader');
+    if(headerEstado){
+      const nombres = Object.values(window.miembrosPorId).filter(n => window.miembrosPorId && n);
+      headerEstado.textContent = nombres.join(', ');
+    }
+  }
+
+  async function cargarMensajesGrupoReales(){
+    const { data, error } = await window.sbGrupo
+      .from('messages')
+      .select('id, sender_id, content, created_at')
+      .eq('group_id', window.grupoIdActual)
+      .order('created_at', { ascending: true });
+
+    if(error){ avisarBannerGrupo('Error cargando mensajes: ' + error.message); return; }
+
+    mensajes = (data || []).map(fila => ({
+      id: fila.id,
+      tipo: 'texto',
+      mia: fila.sender_id === window.miIdGrupo,
+      autor: window.miembrosPorId[fila.sender_id] || 'Alguien',
+      texto: fila.content,
+      hora: new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'})
+    }));
+    render();
+  }
+
+  function suscribirseAMensajesGrupo(){
+    window.sbGrupo
+      .channel('grupo-' + window.grupoIdActual)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `group_id=eq.${window.grupoIdActual}` }, (payload) => {
+        const fila = payload.new;
+        if(fila.sender_id === window.miIdGrupo) return; // ya la mostramos optimista
+        mensajes.push({
+          id: fila.id,
+          tipo: 'texto',
+          mia: false,
+          autor: window.miembrosPorId[fila.sender_id] || 'Alguien',
+          texto: fila.content,
+          hora: new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'})
+        });
+        render();
+      })
+      .subscribe();
+  }
+</script>
+<script>
+  let favoritosStickers = new Set(['🔥','❤️']); // un par ya marcados de ejemplo
+  let respondiendoA = null;
+
+  let mensajes = [];
+
+  const paletaColores = ['#ff2ec4','#17f2ff','#f6b40e','#5bffa0','#7209b7','#3a86ff','#ff9e00'];
+  const coloresAutor = {};
+  function colorParaAutor(nombre){
+    if(!coloresAutor[nombre]){
+      const idx = Object.keys(coloresAutor).length % paletaColores.length;
+      coloresAutor[nombre] = paletaColores[idx];
+    }
+    return coloresAutor[nombre];
+  }
+
+  const contMensajes = document.getElementById('mensajes');
+  const wrapMensajes = document.querySelector('.mensajes-wrap');
+
+  function irAlFinal(){
+    const fijar = () => { wrapMensajes.scrollTop = wrapMensajes.scrollHeight; };
+    fijar();
+    requestAnimationFrame(fijar);
+    setTimeout(fijar, 60);
+    setTimeout(fijar, 200);
+  }
+
+  function render(){
+    contMensajes.innerHTML = '';
+    const fecha = document.createElement('div');
+    fecha.className = 'fecha-separador';
+    fecha.textContent = 'Hoy';
+    contMensajes.appendChild(fecha);
+
+    let autorAnterior = null;
+    mensajes.forEach((m, i) => {
+      if(!m.mia && m.autor && m.autor !== autorAnterior){
+        const etiquetaAutor = document.createElement('div');
+        etiquetaAutor.className = 'autor-msj';
+        etiquetaAutor.style.color = colorParaAutor(m.autor);
+        etiquetaAutor.textContent = m.autor;
+        contMensajes.appendChild(etiquetaAutor);
+      }
+      autorAnterior = m.mia ? null : m.autor;
+
+      const fila = document.createElement('div');
+      fila.className = 'fila-msj ' + (m.mia ? 'mia' : 'otro') + (m.agrupado ? ' agrupado' : '');
+
+      const checkLeido = m.mia ? `<svg class="${m.leido ? 'check-doble' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m2 12 4 4L18 4"/><path d="m8 12 4 4L24 4" transform="translate(-2,0)"/></svg>` : '';
+
+      fila.dataset.idx = mensajes.indexOf(m);
+      if(m.reaccion) fila.style.marginBottom = '13px';
+
+      if(m.tipo === 'texto' && m.esSticker){
+        const esFav = favoritosStickers.has(m.texto);
+        fila.innerHTML = `<div class="burbuja-sticker">
+          <span class="emoji-sticker">${m.texto}</span>
+          <div class="hora-msj-sticker">${m.hora}</div>
+          <div class="btn-fav-sticker sticker-en-chat ${esFav ? 'marcado' : ''}" data-emoji-fav="${m.texto}">
+            <svg viewBox="0 0 24 24" fill="${esFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6Z"/></svg>
+          </div>
+        </div>`;
+        fila.querySelector('.sticker-en-chat').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const emoji = m.texto;
+          if(favoritosStickers.has(emoji)) favoritosStickers.delete(emoji);
+          else favoritosStickers.add(emoji);
+          render();
+        });
+      } else if(m.tipo === 'texto'){
+        const citaHTML = m.citaAutor ? `<div class="cita-en-burbuja"><div class="autor-cita">${m.citaAutor}</div><div class="texto-cita">${m.citaTexto}</div></div>` : '';
+        fila.innerHTML = `<div class="burbuja">${citaHTML}<p>${m.texto}</p><div class="hora-msj">${m.hora}${checkLeido}</div>${m.reaccion ? `<div class="reaccion-msj">${m.reaccion}</div>` : ''}</div>`;
+      } else if(m.tipo === 'imagen'){
+        fila.innerHTML = `<div class="burbuja imagen"><img src="${m.src}" alt="Foto"><div class="hora-msj">${m.hora}${checkLeido}</div></div>`;
+      } else if(m.tipo === 'archivo'){
+        fila.innerHTML = `<div class="burbuja archivo">
+          <div class="icono-archivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg></div>
+          <div class="info-archivo"><div class="nombre-archivo">${m.nombre}</div><div class="peso-archivo">${m.peso}</div></div>
+        </div>`;
+      } else if(m.tipo === 'viewonce'){
+        if(m.vencido){
+          fila.innerHTML = `<div class="burbuja viewonce vencido">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke-dasharray="2 2"/></svg>
+            <span>Foto vista</span>
+          </div>`;
+        } else if(m.abierto){
+          fila.innerHTML = `<div class="burbuja imagen viewonce-abierto">
+            <img src="${m.src}" alt="Foto de una vez">
+            <div class="aviso-cerrando">Se cierra al salir de esta pantalla...</div>
+          </div>`;
+        } else {
+          fila.innerHTML = `<div class="burbuja viewonce">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Foto para ver una vez — tocá para abrir</span>
+          </div>`;
+          fila.querySelector('.viewonce').addEventListener('click', () => {
+            m.abierto = true;
+            render();
+            setTimeout(irAlFinal, 50);
+            // Se marca como vencida a los 5 segundos de verla, simulando que se cierra sola
+            setTimeout(() => { m.vencido = true; render(); }, 5000);
+          });
+        }
+      }
+      contMensajes.appendChild(fila);
+    });
+
+    irAlFinal();
+    activarReacciones();
+  }
+
+  render();
+
+  const overlayReaccion = document.getElementById('overlayReaccion');
+  const menuReacciones = document.getElementById('menuReacciones');
+  let idxSeleccionado = null;
+
+  function activarReacciones(){
+    document.querySelectorAll('.fila-msj').forEach(fila => {
+      let timerLong;
+      let startX = 0, startY = 0, deltaX = 0, deltaY = 0, deslizando = false;
+      let ultimoTap = 0;
+
+      fila.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        deltaX = 0; deltaY = 0; deslizando = false;
+
+        timerLong = setTimeout(() => {
+          if(Math.abs(deltaX) > 10) return; // si ya se está deslizando, no abrir el menú
+          abrirMenuReacciones(fila);
+        }, 480);
+      }, {passive:true});
+
+      fila.addEventListener('touchmove', (e) => {
+        deltaX = e.touches[0].clientX - startX;
+        deltaY = e.touches[0].clientY - startY;
+        if(Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 8){
+          clearTimeout(timerLong);
+          deslizando = true;
+          // el mensaje "sigue" el dedo un poco, con tope, y siempre hacia la derecha (gesto de responder)
+          const desplazo = Math.min(Math.max(deltaX, 0), 70);
+          fila.style.transform = `translateX(${desplazo}px)`;
+          fila.style.transition = 'none';
+          fila.classList.toggle('lista-responder', desplazo > 45);
+        }
+      }, {passive:true});
+
+      fila.addEventListener('touchend', () => {
+        clearTimeout(timerLong);
+        fila.style.transition = 'transform .2s ease';
+        const activarRespuesta = fila.classList.contains('lista-responder');
+        fila.style.transform = 'translateX(0)';
+        fila.classList.remove('lista-responder');
+
+        if(deslizando && activarRespuesta){
+          iniciarRespuesta(+fila.dataset.idx);
+          deslizando = false;
+          return;
+        }
+        deslizando = false;
+
+        // doble toque = like directo con ❤️
+        const ahora = Date.now();
+        if(ahora - ultimoTap < 300){
+          mensajes[+fila.dataset.idx].reaccion = '❤️';
+          render();
+        }
+        ultimoTap = ahora;
+      }, {passive:true});
+    });
+  }
+
+  function abrirMenuReacciones(fila){
+    idxSeleccionado = +fila.dataset.idx;
+    const rect = fila.getBoundingClientRect();
+    menuReacciones.style.top = Math.max(rect.top - 56, 10) + 'px';
+    const izquierda = Math.min(Math.max(rect.left, 10), window.innerWidth - 230);
+    menuReacciones.style.left = izquierda + 'px';
+    overlayReaccion.classList.add('activo');
+    menuReacciones.classList.add('activo');
+  }
+
+  function iniciarRespuesta(idx){
+    const m = mensajes[idx];
+    const textoPreview = m.tipo === 'texto' ? m.texto : (m.tipo === 'imagen' ? '📷 Foto' : m.tipo === 'archivo' ? '📎 ' + m.nombre : '👁️ Foto de una vez');
+    respondiendoA = { idx, autor: m.mia ? 'Vos' : (m.autor || 'Alguien'), texto: textoPreview };
+    mostrarBarraRespuesta();
+  }
+
+  overlayReaccion.addEventListener('click', () => {
+    overlayReaccion.classList.remove('activo');
+    menuReacciones.classList.remove('activo');
+  });
+
+  document.querySelectorAll('.opcion-reaccion').forEach(op => {
+    op.addEventListener('click', () => {
+      if(idxSeleccionado !== null){
+        mensajes[idxSeleccionado].reaccion = op.dataset.reaccion;
+        render();
+      }
+      overlayReaccion.classList.remove('activo');
+      menuReacciones.classList.remove('activo');
+    });
+  });
+
+  // auto-resize del textarea
+  const input = document.getElementById('inputMensaje');
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+  });
+
+  const barraRespuesta = document.getElementById('barraRespuesta');
+  const autorResp = document.getElementById('autorResp');
+  const textoResp = document.getElementById('textoResp');
+
+  function mostrarBarraRespuesta(){
+    autorResp.textContent = respondiendoA.autor;
+    textoResp.textContent = respondiendoA.texto;
+    barraRespuesta.classList.add('activa');
+    input.focus();
+  }
+
+  document.getElementById('btnCerrarResp').addEventListener('click', () => {
+    respondiendoA = null;
+    barraRespuesta.classList.remove('activa');
+  });
+
+  document.getElementById('btnEnviar').addEventListener('click', async () => {
+    const texto = input.value.trim();
+    if(texto === '') return;
+    if(!window.sbGrupo || !window.miIdGrupo || !window.grupoIdActual){
+      console.warn('todavía no está lista la conexión');
+      return;
+    }
+
+    input.value = '';
+    input.style.height = 'auto';
+    const citaAutor = respondiendoA ? respondiendoA.autor : null;
+    const citaTexto = respondiendoA ? respondiendoA.texto : null;
+    respondiendoA = null;
+    barraRespuesta.classList.remove('activa');
+
+    const nuevoMsj = { tipo:'texto', mia:true, texto, hora: new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}), leido:false };
+    if(citaAutor){ nuevoMsj.citaAutor = citaAutor; nuevoMsj.citaTexto = citaTexto; }
+    mensajes.push(nuevoMsj);
+    render();
+
+    const { error } = await window.sbGrupo.from('messages').insert({
+      sender_id: window.miIdGrupo,
+      group_id: window.grupoIdActual,
+      content: texto
+    });
+    if(error) console.error('no se pudo enviar', error);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      document.getElementById('btnEnviar').click();
+    }
+  });
+
+  // ===== hoja de adjuntos =====
+  const overlayAdj = document.getElementById('overlayAdj');
+  const hojaAdj = document.getElementById('hojaAdj');
+  document.getElementById('btnAdjuntar').addEventListener('click', () => {
+    overlayAdj.classList.add('activo');
+    hojaAdj.classList.add('activa');
+  });
+  overlayAdj.addEventListener('click', () => {
+    overlayAdj.classList.remove('activo');
+    hojaAdj.classList.remove('activa');
+  });
+  document.getElementById('opFoto').addEventListener('click', () => document.getElementById('inputArchivoOculto').click());
+  document.getElementById('opCamara').addEventListener('click', () => console.log('abrir cámara del celular (requiere permiso, no simulable acá)'));
+  document.getElementById('opArchivo').addEventListener('click', () => document.getElementById('inputDocumentoOculto').click());
+  document.getElementById('opViewOnce').addEventListener('click', () => document.getElementById('inputViewOnceOculto').click());
+
+  document.getElementById('inputDocumentoOculto').addEventListener('change', (e) => {
+    const archivo = e.target.files[0];
+    if(!archivo) return;
+    const pesoKB = (archivo.size / 1024).toFixed(0);
+    const peso = pesoKB > 1024 ? (pesoKB/1024).toFixed(1) + ' MB' : pesoKB + ' KB';
+    mensajes.push({ tipo:'archivo', mia:true, nombre:archivo.name, peso, hora:new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}), leido:false });
+    render();
+    overlayAdj.classList.remove('activo');
+    hojaAdj.classList.remove('activa');
+    e.target.value = '';
+  });
+
+  document.getElementById('inputViewOnceOculto').addEventListener('change', (e) => {
+    const archivo = e.target.files[0];
+    if(!archivo) return;
+    const lector = new FileReader();
+    lector.onload = (ev) => {
+      mensajes.push({ tipo:'viewonce', mia:true, src:ev.target.result, hora:new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}), abierto:false, vencido:false });
+      render();
+    };
+    lector.readAsDataURL(archivo);
+    overlayAdj.classList.remove('activo');
+    hojaAdj.classList.remove('activa');
+    e.target.value = '';
+  });
+
+  document.getElementById('inputArchivoOculto').addEventListener('change', (e) => {
+    const archivo = e.target.files[0];
+    if(!archivo) return;
+    const lector = new FileReader();
+    lector.onload = (ev) => {
+      mensajes.push({ tipo:'imagen', mia:true, src:ev.target.result, hora:new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}), leido:false });
+      render();
+    };
+    lector.readAsDataURL(archivo);
+    overlayAdj.classList.remove('activo');
+    hojaAdj.classList.remove('activa');
+  });
+
+  document.getElementById('btnAtras').addEventListener('click', () => console.log('volver a la lista de chats'));
+  document.getElementById('btnVerPerfil').addEventListener('click', () => console.log('ver perfil de gonza_lp → abrir info-contacto.html'));
+  document.getElementById('btnVerPerfil2').addEventListener('click', () => console.log('ver perfil de gonza_lp → abrir info-contacto.html'));
+  const overlayLlamada = document.getElementById('overlayLlamada');
+  const estadoLlamada = document.getElementById('estadoLlamada');
+  const subLlamada = document.getElementById('subLlamada');
+  const btnAceptar = document.getElementById('btnAceptar');
+  let timerLlamada = null;
+  let intervaloCronometro = null;
+
+  function iniciarCronometro(){
+    let seg = 0;
+    estadoLlamada.textContent = '00:00';
+    intervaloCronometro = setInterval(() => {
+      seg++;
+      const m = String(Math.floor(seg/60)).padStart(2,'0');
+      const s = String(seg%60).padStart(2,'0');
+      estadoLlamada.textContent = `${m}:${s}`;
+    }, 1000);
+  }
+
+  // ===== llamada saliente (vos llamás) =====
+  document.getElementById('btnLlamar').addEventListener('click', () => {
+    btnAceptar.style.display = 'none';
+    subLlamada.textContent = '';
+    overlayLlamada.classList.add('activo');
+    estadoLlamada.textContent = 'Llamando al grupo...';
+    timerLlamada = setTimeout(iniciarCronometro, 2200);
+  });
+
+  // ===== llamada entrante (te llaman a vos) =====
+  document.getElementById('btnSimularEntrante').addEventListener('click', () => {
+    btnAceptar.style.display = 'flex';
+    overlayLlamada.classList.add('activo');
+    estadoLlamada.textContent = 'Videollamada entrante';
+    subLlamada.textContent = 'Deslizá o tocá para responder';
+  });
+
+  btnAceptar.addEventListener('click', () => {
+    btnAceptar.style.display = 'none';
+    subLlamada.textContent = '';
+    iniciarCronometro();
+  });
+
+  document.getElementById('btnColgar').addEventListener('click', () => {
+    clearTimeout(timerLlamada);
+    clearInterval(intervaloCronometro);
+    overlayLlamada.classList.remove('activo');
+    // Acá, cuando esté conectada la pantalla completa de videollamada, se abriría esa en vez de este overlay simple.
+  });
+
+  // ===== emojis y stickers reales =====
+  const categoriasEmoji = {
+    caritas: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠'],
+    gestos: ['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠','🦷','🦴','👀','👁️','👅','👄'],
+    animales: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐻‍❄️','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🦗','🕷️','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈'],
+    comida: ['🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🫑','🌽','🥕','🧄','🧅','🥔','🍠','🥐','🥯','🍞','🥖','🥨','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🌭','🍔','🍟','🍕','🫓','🥪','🌮','🌯','🫔','🥙','🧆','🥘','🍜','🍲','🍛','🍣','🍱','🥟','🍤','🍙','🍚','🍘','🍥','🥠','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🧉','🍺','🍻'],
+    objetos: ['⌚','📱','💻','⌨️','🖥️','🖨️','🖱️','💽','💾','💿','📀','🎥','📷','📸','📹','📞','☎️','📟','📠','📺','📻','🎙️','⏱️','⏲️','⏰','🕰️','⌛','⏳','📡','🔋','🔌','💡','🔦','🕯️','🪔','🧯','🛢️','💸','💵','💴','💶','💷','🪙','💰','💳','💎'],
+    banderas: ['🏳️','🏴','🏁','🚩','🏳️‍🌈','🇦🇷','🇧🇷','🇺🇾','🇨🇱','🇵🇾','🇧🇴','🇵🇪','🇨🇴','🇻🇪','🇲🇽','🇪🇸','🇺🇸']
+  };
+  const nombresCategoria = { caritas:'😀', gestos:'✋', animales:'🐶', comida:'🍕', objetos:'📱', banderas:'🏳️' };
+
+  const stickersBase = [
+    { id:'st1', emoji:'🎉', nombre:'Fiesta' }, { id:'st2', emoji:'🔥', nombre:'Fuego' },
+    { id:'st3', emoji:'💯', nombre:'Cien' }, { id:'st4', emoji:'❤️', nombre:'Corazón' },
+    { id:'st5', emoji:'😂', nombre:'Risa' }, { id:'st6', emoji:'👀', nombre:'Ojos' },
+    { id:'st7', emoji:'🙌', nombre:'Manos' }, { id:'st8', emoji:'🎊', nombre:'Confeti' },
+    { id:'st9', emoji:'⚽', nombre:'Fútbol' }, { id:'st10', emoji:'🧉', nombre:'Mate' },
+    { id:'st11', emoji:'🍕', nombre:'Pizza' }, { id:'st12', emoji:'🐕', nombre:'Perro' },
+    { id:'st13', emoji:'🎸', nombre:'Guitarra' }, { id:'st14', emoji:'🚀', nombre:'Cohete' },
+    { id:'st15', emoji:'👏', nombre:'Aplauso' }, { id:'st16', emoji:'🤙', nombre:'Buena onda' }
+  ];
+
+  let tabActiva = 'emojis';
+  let categoriaActiva = 'caritas';
+
+  const panelEmoji = document.getElementById('panelEmoji');
+  const contenidoPanel = document.getElementById('contenidoPanel');
+  const tabsEmoji = document.querySelectorAll('.tab-emoji');
+
+  function insertarEnInput(texto){
+    const inicio = input.selectionStart || input.value.length;
+    const fin = input.selectionEnd || input.value.length;
+    input.value = input.value.slice(0, inicio) + texto + input.value.slice(fin);
+    input.focus();
+    input.selectionStart = input.selectionEnd = inicio + texto.length;
+    input.dispatchEvent(new Event('input'));
+  }
+
+  function enviarSticker(emoji){
+    mensajes.push({ tipo:'texto', mia:true, texto: emoji, hora:new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}), leido:false, esSticker:true });
+    render();
+  }
+
+  function pintarEmojis(){
+    let html = `<div class="categorias-emoji">`;
+    Object.keys(categoriasEmoji).forEach(cat => {
+      html += `<div class="cat-chip ${cat === categoriaActiva ? 'activo' : ''}" data-cat="${cat}">${nombresCategoria[cat]} ${cat}</div>`;
+    });
+    html += `</div><div class="grid-emoji-wrap"><div class="grid-emoji">`;
+    categoriasEmoji[categoriaActiva].forEach(em => {
+      html += `<div class="celda-emoji" data-emoji="${em}">${em}</div>`;
+    });
+    html += `</div></div>`;
+    contenidoPanel.innerHTML = html;
+
+    contenidoPanel.querySelectorAll('.cat-chip').forEach(chip => {
+      chip.addEventListener('click', () => { categoriaActiva = chip.dataset.cat; pintarEmojis(); });
+    });
+    contenidoPanel.querySelectorAll('.celda-emoji').forEach(c => {
+      c.addEventListener('click', () => {
+        insertarEnInput(c.dataset.emoji);
+        panelEmoji.classList.remove('abierto');
+      });
+    });
+  }
+
+  function pintarStickers(soloFavoritos){
+    const lista = soloFavoritos ? stickersBase.filter(s => favoritosStickers.has(s.emoji)) : stickersBase;
+    if(soloFavoritos && lista.length === 0){
+      contenidoPanel.innerHTML = `<div class="sin-favoritos">Todavía no marcaste stickers como favoritos. Tocá la ⭐ en cualquiera para guardarlo acá.</div>`;
+      return;
+    }
+    let html = `<div class="grid-emoji-wrap" style="height:auto; max-height:250px;">`;
+    if(!soloFavoritos) html += `<div class="titulo-mini">Todos los stickers</div>`;
+    html += `<div class="grid-stickers">`;
+    lista.forEach(s => {
+      const fav = favoritosStickers.has(s.emoji);
+      html += `<div class="celda-sticker" data-emoji="${s.emoji}">
+        ${s.emoji}
+        <div class="btn-fav-sticker ${fav ? 'marcado' : ''}" data-fav="${s.emoji}">
+          <svg viewBox="0 0 24 24" fill="${fav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6Z"/></svg>
+        </div>
+      </div>`;
+    });
+    html += `</div></div>`;
+    contenidoPanel.innerHTML = html;
+
+    contenidoPanel.querySelectorAll('.celda-sticker').forEach(c => {
+      c.addEventListener('click', (e) => {
+        if(e.target.closest('.btn-fav-sticker')) return;
+        enviarSticker(c.dataset.emoji);
+        panelEmoji.classList.remove('abierto');
+      });
+    });
+    contenidoPanel.querySelectorAll('.btn-fav-sticker').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.fav;
+        if(favoritosStickers.has(id)) favoritosStickers.delete(id);
+        else favoritosStickers.add(id);
+        pintarStickers(tabActiva === 'favoritos');
+      });
+    });
+  }
+
+  function pintarPanel(){
+    if(tabActiva === 'emojis') pintarEmojis();
+    else if(tabActiva === 'stickers') pintarStickers(false);
+    else pintarStickers(true);
+  }
+
+  tabsEmoji.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabsEmoji.forEach(t => t.classList.remove('activo'));
+      tab.classList.add('activo');
+      tabActiva = tab.dataset.tab;
+      pintarPanel();
+    });
+  });
+
+  document.getElementById('btnEmoji').addEventListener('click', () => {
+    panelEmoji.classList.toggle('abierto');
+    if(panelEmoji.classList.contains('abierto')) pintarPanel();
+  });
+
+  let startX = 0;
+  document.getElementById('app').addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+  document.getElementById('app').addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if(startX < 24 && dx > 60){ console.log('volver por swipe'); }
+  }, {passive:true});
+</script>
+</body>
+</html>

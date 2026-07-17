@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Crear grupo</title>
+<style>
+  :root{ --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff; --texto:#f4e9ff; --texto-dim:#b79ad1; }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  input{ font-size:16px; font-family:inherit; }
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); overflow:hidden; background:var(--violeta-bg); }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.15; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  #bannerDiagnostico{ display:none; position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff;
+    padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; text-align:center; line-height:1.5; }
+
+  .pantalla{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .header{ display:flex; align-items:center; justify-content:space-between; gap:6px; padding:10px 8px; flex-shrink:0; }
+  .btn-atras{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.05); }
+  .btn-atras svg{ width:20px; height:20px; color:var(--texto); }
+  .header h2{ font-size:17px; font-weight:800; color:var(--texto); }
+  .btn-crear{ font-size:13.5px; font-weight:800; color:var(--texto-dim); padding:8px 14px; }
+  .btn-crear.activo{ color:var(--cian); }
+
+  .campo-nombre{ margin:4px 20px 14px; }
+  .campo-nombre input{ width:100%; background:rgba(255,255,255,.05); border:1.5px solid rgba(255,255,255,.1);
+    border-radius:14px; padding:0 16px; min-height:48px; color:var(--texto); outline:none; }
+  .campo-nombre input:focus{ border-color:var(--magenta); }
+  .campo-nombre input::placeholder{ color:rgba(183,154,209,.55); }
+
+  .seleccionados-wrap{ padding:0 20px 10px; display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .chip-sel{ flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .chip-sel .avatar{ width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:15px; }
+  .chip-sel span{ font-size:9.5px; color:var(--texto-dim); max-width:48px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .seccion-titulo{ font-size:12px; font-weight:700; color:var(--texto-dim); letter-spacing:.6px; text-transform:uppercase; margin:14px 20px 8px; }
+  .lista-contactos{ padding:0 12px 30px; }
+  .contacto{ display:flex; align-items:center; gap:12px; padding:10px; border-radius:14px; min-height:56px; }
+  .contacto:active{ background:rgba(255,255,255,.05); }
+  .avatar{ width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:16px; flex-shrink:0; }
+  .contacto-info{ flex:1; min-width:0; }
+  .contacto-nombre{ font-size:14.5px; font-weight:700; color:var(--texto); }
+  .checkbox-c{ width:24px; height:24px; border-radius:50%; border:2px solid rgba(255,255,255,.25); flex-shrink:0; }
+  .checkbox-c.marcado{ background:linear-gradient(135deg,var(--magenta),var(--cian)); border-color:transparent; display:flex; align-items:center; justify-content:center; }
+  .checkbox-c.marcado svg{ width:13px; height:13px; color:#fff; }
+
+  .sin-resultados{ text-align:center; padding:50px 30px; font-size:13.5px; color:var(--texto-dim); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+  <div id="bannerDiagnostico"></div>
+  <div class="pantalla">
+    <div class="header">
+      <div class="btn-atras" id="btnAtras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2>Nuevo grupo</h2>
+      <div class="btn-crear" id="btnCrear">Crear</div>
+    </div>
+
+    <div class="campo-nombre">
+      <input type="text" id="nombreGrupo" placeholder="Nombre del grupo (ej: Asado del domingo)" maxlength="40" />
+    </div>
+
+    <div id="seleccionadosWrap" class="seleccionados-wrap" style="display:none;"></div>
+
+    <div class="seccion-titulo">Elegí a quién sumar</div>
+    <div class="lista-contactos" id="listaContactos"><div style="text-align:center;padding:40px;color:var(--texto-dim);">Cargando contactos...</div></div>
+  </div>
+</div>
+
+<script>
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  function avisar(texto){
+    const b = document.getElementById('bannerDiagnostico');
+    b.style.display = 'block';
+    b.textContent = texto;
+  }
+
+  let sb = null, miId = null;
+  let contactos = [];
+  let seleccionados = new Set();
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined'){
+      avisar('⚠️ No se pudo cargar la conexión a Supabase. Revisá tu internet.');
+      return;
+    }
+    sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session){
+      avisar('⚠️ Necesitás iniciar sesión primero. Te llevamos al login...');
+      setTimeout(() => window.location.href = 'login.html', 1500);
+      return;
+    }
+    miId = sesionData.session.user.id;
+    await cargarContactos();
+  });
+
+  async function cargarContactos(){
+    const { data, error } = await sb
+      .from('contacts')
+      .select('user_id, contact_id, status, perfil_user:user_id(id,name), perfil_contact:contact_id(id,name)')
+      .eq('status', 'accepted')
+      .or(`user_id.eq.${miId},contact_id.eq.${miId}`);
+
+    if(error){
+      avisar('Error cargando contactos: ' + error.message);
+      return;
+    }
+
+    contactos = (data || []).map(row => {
+      const soyYoElUser = row.user_id === miId;
+      const otro = soyYoElUser ? row.perfil_contact : row.perfil_user;
+      return otro;
+    }).filter(Boolean);
+
+    renderLista();
+  }
+
+  const listaContactos = document.getElementById('listaContactos');
+  const seleccionadosWrap = document.getElementById('seleccionadosWrap');
+  const btnCrear = document.getElementById('btnCrear');
+  const nombreGrupo = document.getElementById('nombreGrupo');
+
+  function actualizarBotonCrear(){
+    btnCrear.classList.toggle('activo', nombreGrupo.value.trim() !== '' && seleccionados.size >= 1);
+  }
+  nombreGrupo.addEventListener('input', actualizarBotonCrear);
+
+  function renderSeleccionados(){
+    if(seleccionados.size === 0){
+      seleccionadosWrap.style.display = 'none';
+      return;
+    }
+    seleccionadosWrap.style.display = 'flex';
+    seleccionadosWrap.innerHTML = '';
+    contactos.filter(c => seleccionados.has(c.id)).forEach(c => {
+      const chip = document.createElement('div');
+      chip.className = 'chip-sel';
+      chip.innerHTML = `<div class="avatar">${c.name[0].toUpperCase()}</div><span>${c.name}</span>`;
+      seleccionadosWrap.appendChild(chip);
+    });
+  }
+
+  function renderLista(){
+    listaContactos.innerHTML = '';
+    if(contactos.length === 0){
+      listaContactos.innerHTML = '<div class="sin-resultados">No tenés contactos todavía. Agregá gente primero desde "Nuevo chat".</div>';
+      return;
+    }
+    contactos.forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'contacto';
+      const marcado = seleccionados.has(c.id);
+      item.innerHTML = `
+        <div class="avatar">${c.name[0].toUpperCase()}</div>
+        <div class="contacto-info"><div class="contacto-nombre">${c.name}</div></div>
+        <div class="checkbox-c ${marcado ? 'marcado' : ''}">${marcado ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : ''}</div>
+      `;
+      item.addEventListener('click', () => {
+        if(seleccionados.has(c.id)) seleccionados.delete(c.id);
+        else seleccionados.add(c.id);
+        renderLista();
+        renderSeleccionados();
+        actualizarBotonCrear();
+      });
+      listaContactos.appendChild(item);
+    });
+  }
+
+  btnCrear.addEventListener('click', async () => {
+    if(!btnCrear.classList.contains('activo')) return;
+    btnCrear.textContent = 'Creando...';
+
+    const { data: grupoNuevo, error: errorGrupo } = await sb
+      .from('groups')
+      .insert({ name: nombreGrupo.value.trim(), created_by: miId })
+      .select('id')
+      .single();
+
+    if(errorGrupo){
+      avisar('Error creando el grupo: ' + errorGrupo.message);
+      btnCrear.textContent = 'Crear';
+      return;
+    }
+
+    const miembros = [...seleccionados].map(uid => ({ group_id: grupoNuevo.id, user_id: uid, is_admin: false }));
+    miembros.push({ group_id: grupoNuevo.id, user_id: miId, is_admin: true });
+
+    const { error: errorMiembros } = await sb.from('group_members').insert(miembros);
+    if(errorMiembros){
+      avisar('El grupo se creó pero hubo un error agregando miembros: ' + errorMiembros.message);
+      return;
+    }
+
+    window.location.href = `chat-grupal.html?group=${grupoNuevo.id}&name=${encodeURIComponent(nombreGrupo.value.trim())}`;
+  });
+
+  document.getElementById('btnAtras').addEventListener('click', () => { window.location.href = 'nuevo-chat.html'; });
+</script>
+</body>
+</html>

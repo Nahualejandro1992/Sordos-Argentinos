@@ -378,7 +378,7 @@
     }).filter(Boolean);
 
     // para cada contacto, buscamos el último mensaje y cuántos no leídos hay
-    chats = await Promise.all(contactosReales.map(async (otro) => {
+    const chatsIndividuales = await Promise.all(contactosReales.map(async (otro) => {
       const { data: ultimosMsjs } = await sb
         .from('messages')
         .select('content, created_at, sender_id, read_at')
@@ -407,9 +407,41 @@
       };
     }));
 
+    // ahora traemos los grupos donde soy miembro
+    const { data: gruposData, error: errorGrupos } = await sb
+      .from('group_members')
+      .select('groups:group_id(id,name,avatar_emoji)')
+      .eq('user_id', miId);
+
+    let chatsGrupales = [];
+    if(!errorGrupos && gruposData){
+      chatsGrupales = await Promise.all(gruposData.filter(f => f.groups).map(async (fila) => {
+        const g = fila.groups;
+        const { data: ultimosMsjs } = await sb
+          .from('messages')
+          .select('content, created_at')
+          .eq('group_id', g.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        const ultimo = ultimosMsjs && ultimosMsjs[0];
+        return {
+          id: g.id,
+          nombre: g.name,
+          verificado: false,
+          online: false,
+          grupo: true,
+          emoji: g.avatar_emoji || '💬',
+          ultimoMsg: ultimo ? ultimo.content : 'Grupo creado — ¡mandá el primer mensaje!',
+          hora: ultimo ? new Date(ultimo.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}) : '',
+          noLeidos: 0,
+          tipo: 'texto'
+        };
+      }));
+    }
+
+    chats = [...chatsIndividuales, ...chatsGrupales];
     render();
   }
-
 
   const lista = document.getElementById('lista');
 
@@ -540,8 +572,8 @@
         const chatObj = chats.find(c => String(c.id) === String(id));
         if(chatObj && !chatObj.grupo){
           window.location.href = `chat-individual.html?with=${chatObj.id}&name=${encodeURIComponent(chatObj.nombre)}`;
-        } else {
-          console.log('abrir chat grupal', id);
+        } else if(chatObj && chatObj.grupo){
+          window.location.href = `chat-grupal.html?group=${chatObj.id}&name=${encodeURIComponent(chatObj.nombre)}`;
         }
       });
 

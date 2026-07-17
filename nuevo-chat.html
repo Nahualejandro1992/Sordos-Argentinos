@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Nuevo chat</title>
+<style>
+  :root{ --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff; --texto:#f4e9ff; --texto-dim:#b79ad1; --verde:#5bffa0; --amarillo:#f6b40e; }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  input{ font-size:16px; font-family:inherit; }
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); overflow:hidden; background:var(--violeta-bg); }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.15; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  #bannerDiagnostico{ display:none; position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff;
+    padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; text-align:center; line-height:1.5; }
+
+  .pantalla{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .header{ display:flex; align-items:center; gap:6px; padding:10px 8px; flex-shrink:0; }
+  .btn-atras{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.05); }
+  .btn-atras svg{ width:20px; height:20px; color:var(--texto); }
+  .header h2{ font-size:18px; font-weight:800; color:var(--texto); }
+
+  .buscador{ margin:4px 20px 14px; display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.05);
+    border:1.5px solid rgba(255,255,255,.1); border-radius:14px; padding:0 14px; min-height:46px; flex-shrink:0; }
+  .buscador svg{ width:17px; height:17px; color:var(--texto-dim); flex-shrink:0; }
+  .buscador input{ flex:1; background:transparent; border:none; outline:none; color:var(--texto); min-height:46px; }
+  .buscador input::placeholder{ color:rgba(183,154,209,.55); }
+
+  .opciones-rapidas{ padding:0 12px; margin-bottom:10px; }
+  .op-rapida{ display:flex; align-items:center; gap:14px; padding:12px 10px; border-radius:14px; min-height:52px; }
+  .op-rapida:active{ background:rgba(255,255,255,.05); }
+  .op-rapida .icono{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .op-rapida .icono.grupo{ background:linear-gradient(135deg,var(--magenta),var(--cian)); }
+  .op-rapida .icono svg{ width:20px; height:20px; color:#fff; }
+  .op-rapida span{ font-size:14.5px; font-weight:700; color:var(--texto); }
+
+  .seccion-titulo{ font-size:12px; font-weight:700; color:var(--texto-dim); letter-spacing:.6px; text-transform:uppercase;
+    margin:14px 20px 8px; }
+
+  .lista-contactos{ padding:0 12px 30px; }
+  .contacto{ display:flex; align-items:center; gap:12px; padding:10px; border-radius:14px; min-height:56px; }
+  .contacto:active{ background:rgba(255,255,255,.05); }
+  .avatar{ width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:16px; flex-shrink:0; position:relative; }
+  .contacto-info{ flex:1; min-width:0; }
+  .contacto-nombre{ font-size:14.5px; font-weight:700; color:var(--texto); display:flex; align-items:center; gap:4px; }
+  .contacto-nombre svg{ width:13px; height:13px; color:var(--cian); }
+  .contacto-estado{ margin-top:1px; font-size:12px; color:var(--texto-dim); }
+
+  .btn-estado-contacto{ flex-shrink:0; min-height:32px; padding:0 14px; border-radius:16px; font-size:11.5px; font-weight:700; border:none; }
+  .btn-estado-contacto.agregar{ background:linear-gradient(135deg,var(--magenta),var(--cian)); color:#fff; }
+  .btn-estado-contacto.pendiente{ background:rgba(246,180,14,.12); color:var(--amarillo); }
+  .btn-estado-contacto.aceptar{ background:var(--verde); color:#050014; }
+
+  .sin-resultados{ text-align:center; padding:50px 30px; font-size:13.5px; color:var(--texto-dim); }
+  .cargando-spin{ margin:40px auto; width:30px; height:30px; border-radius:50%; border:3px solid rgba(255,255,255,.1);
+    border-top-color:var(--cian); animation:girarSpin .7s linear infinite; }
+  @keyframes girarSpin{ to{ transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+  <div id="bannerDiagnostico"></div>
+  <div class="pantalla">
+    <div class="header">
+      <div class="btn-atras" id="btnAtras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2>Nuevo chat</h2>
+    </div>
+
+    <div class="buscador">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="buscarContacto" placeholder="Buscar por nombre de usuario..." />
+    </div>
+
+    <div class="opciones-rapidas">
+      <div class="op-rapida" id="btnNuevoGrupo">
+        <div class="icono grupo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <span>Nuevo grupo</span>
+      </div>
+    </div>
+
+    <div class="seccion-titulo" id="tituloLista">Tus contactos</div>
+    <div class="lista-contactos" id="listaContactos"><div class="cargando-spin"></div></div>
+  </div>
+</div>
+
+<script>
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  const banner = document.getElementById('bannerDiagnostico');
+  const lista = document.getElementById('listaContactos');
+  const titulo = document.getElementById('tituloLista');
+  let sb = null;
+  let miId = null;
+  let misContactos = []; // { id, name, estado: 'accepted'|'pending_enviada'|'pending_recibida' }
+
+  function avisar(texto){
+    banner.style.display = 'block';
+    banner.textContent = texto;
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined'){
+      avisar('⚠️ No se pudo cargar la conexión a Supabase. Revisá tu internet.');
+      lista.innerHTML = '';
+      return;
+    }
+
+    sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session){
+      avisar('⚠️ Necesitás iniciar sesión primero. Te llevamos al login...');
+      setTimeout(() => window.location.href = 'login.html', 1500);
+      return;
+    }
+    miId = sesionData.session.user.id;
+    await cargarContactos();
+  });
+
+  async function cargarContactos(){
+    const { data, error } = await sb
+      .from('contacts')
+      .select('id, user_id, contact_id, status, profiles_user:user_id(id,name), profiles_contact:contact_id(id,name)')
+      .or(`user_id.eq.${miId},contact_id.eq.${miId}`);
+
+    if(error){
+      avisar('Error cargando contactos: ' + error.message);
+      lista.innerHTML = '';
+      return;
+    }
+
+    misContactos = (data || []).map(row => {
+      const soyYoElUser = row.user_id === miId;
+      const otro = soyYoElUser ? row.profiles_contact : row.profiles_user;
+      let estado = row.status;
+      if(row.status === 'pending'){
+        estado = soyYoElUser ? 'pending_enviada' : 'pending_recibida';
+      }
+      return { rowId: row.id, id: otro ? otro.id : null, name: otro ? otro.name : '???', estado };
+    }).filter(c => c.id);
+
+    render();
+  }
+
+  function botonPara(c){
+    if(c.estado === 'accepted') return '';
+    if(c.estado === 'pending_enviada') return `<button class="btn-estado-contacto pendiente" disabled>Pendiente</button>`;
+    if(c.estado === 'pending_recibida') return `<button class="btn-estado-contacto aceptar" data-rowid="${c.rowId}" data-accion="aceptar">Aceptar</button>`;
+    return '';
+  }
+
+  function render(busqueda){
+    busqueda = busqueda || '';
+    lista.innerHTML = '';
+
+    if(busqueda.trim() === ''){
+      titulo.textContent = 'Tus contactos';
+      const aceptados = misContactos.filter(c => c.estado === 'accepted' || c.estado === 'pending_recibida');
+      if(aceptados.length === 0){
+        lista.innerHTML = '<div class="sin-resultados">Todavía no tenés contactos. Buscá a alguien por su nombre de usuario arriba.</div>';
+        return;
+      }
+      aceptados.forEach(c => pintarFila(c));
+      return;
+    }
+
+    titulo.textContent = `Resultados para "${busqueda}"`;
+    buscarUsuarios(busqueda);
+  }
+
+  async function buscarUsuarios(texto){
+    const { data, error } = await sb
+      .from('profiles')
+      .select('id, name')
+      .ilike('name', `%${texto}%`)
+      .neq('id', miId)
+      .eq('status', 'verified')
+      .limit(20);
+
+    lista.innerHTML = '';
+    if(error){
+      lista.innerHTML = `<div class="sin-resultados">Error buscando: ${error.message}</div>`;
+      return;
+    }
+    if(!data || data.length === 0){
+      lista.innerHTML = '<div class="sin-resultados">No encontramos a nadie con ese nombre de usuario.</div>';
+      return;
+    }
+
+    data.forEach(u => {
+      const existente = misContactos.find(c => c.id === u.id);
+      const c = existente || { id: u.id, name: u.name, estado: 'ninguno' };
+      pintarFila(c, true);
+    });
+  }
+
+  function pintarFila(c, esBusqueda){
+    const item = document.createElement('div');
+    item.className = 'contacto';
+    const inicial = (c.name || '?')[0].toUpperCase();
+    let botonHTML = botonPara(c);
+    if(c.estado === 'ninguno'){
+      botonHTML = `<button class="btn-estado-contacto agregar" data-userid="${c.id}" data-accion="agregar">Agregar</button>`;
+    }
+    item.innerHTML = `
+      <div class="avatar"><span>${inicial}</span></div>
+      <div class="contacto-info">
+        <div class="contacto-nombre">${c.name}</div>
+        <div class="contacto-estado">${c.estado === 'accepted' ? 'Ya son contactos' : c.estado === 'pending_recibida' ? 'Te quiere agregar' : ''}</div>
+      </div>
+      ${botonHTML}
+    `;
+    if(c.estado === 'accepted'){
+      item.addEventListener('click', () => {
+        window.location.href = `chat-individual.html?with=${c.id}&name=${encodeURIComponent(c.name)}`;
+      });
+    }
+    lista.appendChild(item);
+
+    item.querySelectorAll('.btn-estado-contacto[data-accion]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        btn.disabled = true;
+        btn.textContent = '...';
+        if(btn.dataset.accion === 'agregar'){
+          const { error } = await sb.from('contacts').insert({ user_id: miId, contact_id: btn.dataset.userid, status: 'pending' });
+          if(error){ avisar('Error: ' + error.message); return; }
+          await cargarContactos();
+          render(document.getElementById('buscarContacto').value);
+        } else if(btn.dataset.accion === 'aceptar'){
+          const { error } = await sb.from('contacts').update({ status: 'accepted' }).eq('id', btn.dataset.rowid);
+          if(error){ avisar('Error: ' + error.message); return; }
+          await cargarContactos();
+          render(document.getElementById('buscarContacto').value);
+        }
+      });
+    });
+  }
+
+  document.getElementById('buscarContacto').addEventListener('input', (e) => render(e.target.value));
+  document.getElementById('btnNuevoGrupo').addEventListener('click', () => { window.location.href = 'crear-grupo.html'; });
+  document.getElementById('btnAtras').addEventListener('click', () => { window.location.href = 'chats-lista.html'; });
+</script>
+</body>
+</html>
