@@ -262,7 +262,7 @@
 
     let avatarUrl = null;
     if(archivoFotoNuevo){
-      const nombreArchivo = miId + '-' + Date.now() + '.jpg';
+      const nombreArchivo = miId + '/foto-' + Date.now() + '.jpg';
       const { error: errorSubida } = await sb.storage.from('avatars').upload(nombreArchivo, archivoFotoNuevo, { upsert: true });
       if(errorSubida){
         avisar('Error subiendo la foto: ' + errorSubida.message);
