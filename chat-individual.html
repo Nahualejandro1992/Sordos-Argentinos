@@ -439,6 +439,14 @@
       leido: !!fila.read_at
     }));
     render();
+
+    // marcamos como leídos todos los mensajes que me mandaron a mí y todavía no había abierto
+    await window.sbChat
+      .from('messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('sender_id', window.otroIdChat)
+      .eq('receiver_id', window.miIdChat)
+      .is('read_at', null);
   }
 
   function suscribirseAMensajesNuevos(){

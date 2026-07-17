@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Notificaciones</title>
+<style>
+  :root{
+    --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff;
+    --texto:#f4e9ff; --texto-dim:#b79ad1; --verde:#5bffa0; --rojo:#ff3b30; --amarillo:#f6b40e;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; overscroll-behavior:none; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); overflow:hidden; background:var(--violeta-bg); }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.15; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  .pantalla{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+
+  .header{ display:flex; align-items:center; justify-content:space-between; padding:14px 20px 6px; flex-shrink:0; }
+  .header-izq{ display:flex; align-items:center; gap:10px; }
+  .btn-atras{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.05); }
+  .btn-atras svg{ width:19px; height:19px; color:var(--texto); }
+  .header h1{ font-size:22px; font-weight:800; color:var(--texto); }
+  .btn-limpiar{ font-size:12px; font-weight:700; color:var(--cian); padding:6px 4px; }
+
+  .filtros{ display:flex; gap:8px; padding:10px 20px 6px; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0; }
+  .filtros::-webkit-scrollbar{ display:none; }
+  .filtro-chip{ flex-shrink:0; min-height:32px; padding:0 14px; border-radius:16px; background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.1); color:var(--texto-dim); font-size:12px; font-weight:700; display:flex; align-items:center; gap:5px; }
+  .filtro-chip.activo{ background:linear-gradient(135deg,var(--magenta),var(--cian)); color:#fff; border-color:transparent; }
+  .filtro-chip .badge-chip{ background:rgba(255,255,255,.2); border-radius:8px; padding:1px 5px; font-size:9.5px; }
+  .filtro-chip.activo .badge-chip{ background:rgba(255,255,255,.3); }
+
+  .contenido{ flex:1; padding:6px 20px 30px; position:relative; z-index:1; }
+  .fecha-titulo{ font-size:12px; font-weight:700; color:var(--texto-dim); letter-spacing:.5px; text-transform:uppercase; margin:16px 0 8px; }
+  .fecha-titulo:first-child{ margin-top:4px; }
+
+  .grupo-notifs{ border-radius:16px; overflow:hidden; background:rgba(255,255,255,.04); }
+  .notif{ display:flex; align-items:flex-start; gap:12px; padding:13px 14px; border-bottom:1px solid rgba(255,255,255,.05); position:relative; }
+  .notif:last-child{ border-bottom:none; }
+  .notif:active{ background:rgba(255,255,255,.05); }
+  .notif.no-leida{ background:rgba(23,242,255,.04); }
+  .notif.no-leida::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,var(--magenta),var(--cian)); }
+
+  .icono-notif{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; }
+  .icono-notif svg{ width:19px; height:19px; }
+  .icono-notif.mensaje{ background:rgba(23,242,255,.14); color:var(--cian); }
+  .icono-notif.llamada{ background:rgba(255,59,48,.14); color:var(--rojo); }
+  .icono-notif.solicitud{ background:rgba(255,46,196,.14); color:var(--magenta); }
+  .icono-notif.sistema{ background:rgba(246,180,14,.14); color:var(--amarillo); }
+  .icono-notif.verificacion{ background:rgba(91,255,160,.14); color:var(--verde); }
+  .icono-notif .avatar-notif{ width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:14px; }
+  .punto-tipo{ position:absolute; bottom:-2px; right:-2px; width:16px; height:16px; border-radius:50%; background:var(--violeta-bg);
+    display:flex; align-items:center; justify-content:center; border:2px solid var(--violeta-bg); }
+  .punto-tipo svg{ width:9px; height:9px; }
+
+  .texto-notif{ flex:1; min-width:0; }
+  .texto-notif .titulo-n{ font-size:13.5px; font-weight:700; color:var(--texto); line-height:1.35; }
+  .texto-notif .titulo-n b{ font-weight:800; }
+  .texto-notif .sub-n{ margin-top:2px; font-size:12px; color:var(--texto-dim); line-height:1.4; }
+  .texto-notif .hora-n{ margin-top:4px; font-size:10.5px; color:var(--texto-dim); }
+
+  .btn-accion-notif{ flex-shrink:0; min-height:30px; padding:0 12px; border-radius:15px; font-size:11px; font-weight:700; border:none; }
+  .btn-accion-notif.aceptar{ background:linear-gradient(135deg,var(--magenta),var(--cian)); color:#fff; }
+  .btn-accion-notif.rechazar{ background:rgba(255,255,255,.08); color:var(--texto-dim); margin-top:6px; }
+  .col-botones{ display:flex; flex-direction:column; gap:6px; }
+
+  .vacio{ margin-top:70px; text-align:center; padding:0 30px; }
+  .vacio .icono{ width:64px; height:64px; margin:0 auto; border-radius:50%; background:rgba(255,255,255,.05); display:flex; align-items:center; justify-content:center; }
+  .vacio .icono svg{ width:28px; height:28px; color:var(--texto-dim); }
+  .vacio p{ margin-top:16px; font-size:13.5px; color:var(--texto-dim); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+  <div class="pantalla">
+    <div class="header">
+      <div class="header-izq">
+        <div class="btn-atras" id="btnAtras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+        <h1>Notificaciones</h1>
+      </div>
+      <div class="btn-limpiar" id="btnLimpiar">Marcar todo leído</div>
+    </div>
+
+    <div class="filtros" id="filtros"></div>
+
+    <div class="contenido" id="contenido"></div>
+  </div>
+</div>
+
+<script>
+  const iconoMensaje = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5C3 7.4 6.8 4 11.5 4S20 7.4 20 11.5 16.2 19 11.5 19c-1 0-2-.2-2.9-.5L4 20l1.2-3.5C3.8 15 3 13.3 3 11.5Z"/></svg>`;
+  const iconoLlamada = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg>`;
+  const iconoSolicitud = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>`;
+  const iconoSistema = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>`;
+  const iconoVerif = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+
+  let notificaciones = [];
+  let sb = null, miId = null;
+
+  function fechaGrupo(fechaISO){
+    const fecha = new Date(fechaISO);
+    const hoy = new Date();
+    const ayer = new Date(); ayer.setDate(hoy.getDate() - 1);
+    const esMismoDia = (a,b) => a.toDateString() === b.toDateString();
+    if(esMismoDia(fecha, hoy)) return 'hoy';
+    if(esMismoDia(fecha, ayer)) return 'ayer';
+    return 'semana';
+  }
+
+  function mapearTipo(tipoDB){
+    if(tipoDB === 'solicitud') return 'solicitud';
+    if(tipoDB === 'mensaje') return 'mensaje';
+    if(tipoDB === 'llamada') return 'llamada';
+    if(tipoDB === 'sistema') return 'sistema';
+    return 'sistema';
+  }
+
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  function avisarBannerCentro(texto){
+    let b = document.getElementById('bannerDiagnosticoCentro');
+    if(!b){
+      b = document.createElement('div');
+      b.id = 'bannerDiagnosticoCentro';
+      b.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; font-family:sans-serif; text-align:center; line-height:1.5;';
+      document.body.prepend(b);
+    }
+    b.textContent = texto;
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined'){
+      avisarBannerCentro('⚠️ No se pudo cargar la conexión a Supabase. Revisá tu internet.');
+      return;
+    }
+    sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session){
+      avisarBannerCentro('⚠️ Necesitás iniciar sesión primero. Te llevamos al login...');
+      setTimeout(() => window.location.href = 'login.html', 1500);
+      return;
+    }
+    miId = sesionData.session.user.id;
+    await cargarNotifsReales();
+  });
+
+  async function cargarNotifsReales(){
+    const { data, error } = await sb
+      .from('notifications')
+      .select('id, type, title, body, related_id, read, created_at')
+      .eq('user_id', miId)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if(error){ avisarBannerCentro('Error cargando notificaciones: ' + error.message); return; }
+
+    notificaciones = (data || []).map(fila => ({
+      id: fila.id,
+      tipo: mapearTipo(fila.type),
+      autor: fila.title || 'Sordos Argentinos',
+      texto: fila.body || '',
+      hora: new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}),
+      fecha: fechaGrupo(fila.created_at),
+      leida: !!fila.read,
+      pendiente: fila.type === 'solicitud' && !fila.read,
+      contactRowId: fila.related_id
+    }));
+
+    renderTodo();
+  }
+
+  const filtros = [
+    { id:'todas', nombre:'Todas' },
+    { id:'mensaje', nombre:'Mensajes' },
+    { id:'llamada', nombre:'Llamadas' },
+    { id:'solicitud', nombre:'Solicitudes' },
+    { id:'sistema', nombre:'Sistema' }
+  ];
+
+  const nombresFecha = { hoy:'Hoy', ayer:'Ayer', semana:'Esta semana' };
+  let filtroActivo = 'todas';
+
+  const filtrosCont = document.getElementById('filtros');
+  function contarNoLeidas(tipo){
+    return notificaciones.filter(n => !n.leida && (tipo === 'todas' || n.tipo === tipo)).length;
+  }
+
+  function renderFiltros(){
+    filtrosCont.innerHTML = '';
+    filtros.forEach(f => {
+      const noLeidas = contarNoLeidas(f.id);
+      const chip = document.createElement('div');
+      chip.className = 'filtro-chip' + (f.id === filtroActivo ? ' activo' : '');
+      chip.dataset.id = f.id;
+      chip.innerHTML = `${f.nombre}${noLeidas > 0 ? `<span class="badge-chip">${noLeidas}</span>` : ''}`;
+      chip.addEventListener('click', () => { filtroActivo = f.id; renderTodo(); });
+      filtrosCont.appendChild(chip);
+    });
+  }
+
+  const contenido = document.getElementById('contenido');
+
+  function iconoPorTipo(tipo){
+    return { mensaje:iconoMensaje, llamada:iconoLlamada, solicitud:iconoSolicitud, sistema:iconoSistema, verificacion:iconoVerif }[tipo];
+  }
+  function clasePorTipo(tipo){ return tipo; }
+
+  function renderLista(){
+    contenido.innerHTML = '';
+    const datos = notificaciones.filter(n => filtroActivo === 'todas' || n.tipo === filtroActivo);
+
+    if(datos.length === 0){
+      contenido.innerHTML = `<div class="vacio">
+        <div class="icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+        <p>No hay notificaciones acá.</p>
+      </div>`;
+      return;
+    }
+
+    ['hoy','ayer','semana'].forEach(fecha => {
+      const grupo = datos.filter(n => n.fecha === fecha);
+      if(grupo.length === 0) return;
+
+      const titulo = document.createElement('div');
+      titulo.className = 'fecha-titulo';
+      titulo.textContent = nombresFecha[fecha];
+      contenido.appendChild(titulo);
+
+      const cont = document.createElement('div');
+      cont.className = 'grupo-notifs';
+
+      grupo.forEach(n => {
+        const item = document.createElement('div');
+        item.className = 'notif' + (n.leida ? '' : ' no-leida');
+        item.dataset.id = n.id;
+
+        const inicial = n.autor.replace('Grupo: ','')[0].toUpperCase();
+        const esAvatar = n.tipo === 'mensaje' || n.tipo === 'llamada';
+
+        item.innerHTML = `
+          <div class="icono-notif ${esAvatar ? '' : clasePorTipo(n.tipo)}">
+            ${esAvatar ? `<div class="avatar-notif">${inicial}</div>` : iconoPorTipo(n.tipo)}
+            ${esAvatar ? `<div class="punto-tipo icono-notif ${clasePorTipo(n.tipo)}" style="width:16px;height:16px;">${iconoPorTipo(n.tipo)}</div>` : ''}
+          </div>
+          <div class="texto-notif">
+            <div class="titulo-n"><b>${n.autor}</b> ${n.tipo === 'mensaje' && !n.autor.startsWith('Grupo') ? '' : ''}</div>
+            <div class="sub-n">${n.texto}</div>
+            <div class="hora-n">${n.hora}</div>
+          </div>
+          ${n.pendiente ? `<div class="col-botones">
+              <button class="btn-accion-notif aceptar" data-accion="aceptar" data-id="${n.id}">Aceptar</button>
+              <button class="btn-accion-notif rechazar" data-accion="rechazar" data-id="${n.id}">Rechazar</button>
+            </div>` : ''}
+        `;
+        cont.appendChild(item);
+      });
+
+      contenido.appendChild(cont);
+    });
+
+    contenido.querySelectorAll('.notif').forEach(item => {
+      item.addEventListener('click', async (e) => {
+        if(e.target.closest('.btn-accion-notif')) return;
+        const id = item.dataset.id;
+        const n = notificaciones.find(x => String(x.id) === String(id));
+        if(n && !n.leida){
+          n.leida = true;
+          if(sb) await sb.from('notifications').update({ read: true }).eq('id', n.id);
+          renderTodo();
+        }
+      });
+    });
+
+    contenido.querySelectorAll('.btn-accion-notif').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const n = notificaciones.find(x => String(x.id) === String(id));
+        if(n){
+          const aceptar = btn.dataset.accion === 'aceptar';
+          if(sb && n.contactRowId){
+            await sb.from('contacts').update({ status: aceptar ? 'accepted' : 'blocked' }).eq('id', n.contactRowId);
+          }
+          n.leida = true;
+          n.pendiente = false;
+          n.texto = aceptar ? 'Ahora son contactos' : 'Solicitud rechazada';
+          if(sb) await sb.from('notifications').update({ read: true }).eq('id', n.id);
+          renderTodo();
+        }
+      });
+    });
+  }
+
+  function renderTodo(){
+    renderFiltros();
+    renderLista();
+  }
+
+  document.getElementById('btnLimpiar').addEventListener('click', async () => {
+    notificaciones.forEach(n => n.leida = true);
+    if(sb && miId){
+      await sb.from('notifications').update({ read: true }).eq('user_id', miId);
+    }
+    renderTodo();
+  });
+  document.getElementById('btnAtras').addEventListener('click', () => { window.location.href = 'chats-lista.html'; });
+</script>
+</body>
+</html>
