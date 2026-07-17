@@ -347,8 +347,8 @@
         ayudaErrorTexto.textContent = 'Tu cuenta fue rechazada. Contactá a un admin.';
         ayudaError.classList.add('mostrar');
       } else {
-        // status === 'verified' -> acá, en la app real, navega a la lista de Chats.
-        console.log('login OK, ir a chats-lista.html');
+        // status === 'verified' -> ¡entramos de verdad!
+        window.location.href = 'chats-lista.html';
       }
 
     } catch(err){

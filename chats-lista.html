@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Chats</title>
+<style>
+  :root{
+    --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff;
+    --texto:#f4e9ff; --texto-dim:#b79ad1; --verde:#5bffa0;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; overscroll-behavior:none; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  input{ font-size:16px; font-family:inherit; }
+
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+    overflow:hidden; background:var(--violeta-bg); display:flex; flex-direction:column;
+  }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.15; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  /* ===== header ===== */
+  .header{ position:relative; z-index:1; padding:14px 20px 10px; flex-shrink:0; }
+  .header-top{ display:flex; align-items:center; justify-content:space-between; }
+  .header-top h1{ font-size:26px; font-weight:800; color:var(--texto); }
+  .header-iconos{ display:flex; gap:8px; }
+  .btn-icono{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.05); }
+  .btn-icono:active{ background:rgba(255,255,255,.12); }
+  .btn-icono svg{ width:19px; height:19px; color:var(--texto); }
+
+  .buscador{ margin-top:14px; display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.05);
+    border:1.5px solid rgba(255,255,255,.1); border-radius:14px; padding:0 14px; min-height:44px; }
+  .buscador svg{ width:17px; height:17px; color:var(--texto-dim); flex-shrink:0; }
+  .buscador input{ flex:1; background:transparent; border:none; outline:none; color:var(--texto); min-height:44px; }
+  .buscador input::placeholder{ color:rgba(183,154,209,.55); }
+
+  /* ===== filtros ===== */
+  .filtros{ display:flex; gap:8px; margin-top:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; }
+  .filtros::-webkit-scrollbar{ display:none; }
+  .filtro-chip{ flex-shrink:0; min-height:34px; padding:0 16px; border-radius:18px; background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.1); color:var(--texto-dim); font-size:12.5px; font-weight:700; display:flex; align-items:center; }
+  .filtro-chip.activo{ background:linear-gradient(135deg,var(--magenta),var(--cian)); color:#fff; border-color:transparent; }
+
+  /* ===== lista de chats ===== */
+  .lista-wrap{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; position:relative; z-index:1; }
+  .lista{ padding:6px 12px 90px; }
+
+  .chat-item-wrap{ position:relative; overflow:hidden; border-radius:16px; margin-bottom:4px; }
+  .chat-acciones{ position:absolute; inset:0; display:flex; justify-content:flex-end; align-items:stretch; z-index:0; }
+  .accion-btn{ width:76px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:#fff; font-size:11px; font-weight:700; }
+  .accion-btn.archivar{ background:#4361ee; }
+  .accion-btn.eliminar{ background:#ff5470; }
+  .accion-btn svg{ width:19px; height:19px; }
+
+  .chat-item{ position:relative; z-index:1; background:var(--violeta-bg); display:flex; align-items:center; gap:12px;
+    padding:11px 10px; border-radius:16px; transition:transform .2s ease; touch-action:pan-y; }
+  .chat-item.deslizado{ transform:translateX(-228px); }
+  .accion-btn.silenciar{ background:#7209b7; }
+  .chat-item:active{ background:rgba(255,255,255,.04); }
+
+  .avatar-wrap{ position:relative; flex-shrink:0; }
+  .avatar{ width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:18px; }
+  .avatar.grupo{ background:linear-gradient(135deg,#ff9e00,#ff006e); }
+  .punto-online{ position:absolute; bottom:1px; right:1px; width:13px; height:13px; border-radius:50%; background:var(--verde);
+    border:2.5px solid var(--violeta-bg); box-shadow:0 0 0 0 rgba(91,255,160,.6); animation:pulsoOnline 1.8s ease-out infinite; }
+  @keyframes pulsoOnline{
+    0%{ box-shadow:0 0 0 0 rgba(91,255,160,.7); }
+    70%{ box-shadow:0 0 0 7px rgba(91,255,160,0); }
+    100%{ box-shadow:0 0 0 0 rgba(91,255,160,0); }
+  }
+  @media (prefers-reduced-motion: reduce){ .punto-online{ animation:none; } }
+
+  .chat-info{ flex:1; min-width:0; }
+  .chat-linea1{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .chat-nombre{ font-size:15px; font-weight:700; color:var(--texto); display:flex; align-items:center; gap:4px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chat-nombre svg{ width:13px; height:13px; color:var(--cian); flex-shrink:0; }
+  .chat-hora{ font-size:11.5px; color:var(--texto-dim); flex-shrink:0; }
+  .chat-hora.no-leido{ color:var(--magenta); font-weight:700; }
+
+  .chat-linea2{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:3px; }
+  .chat-preview{ font-size:13px; color:var(--texto-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:flex; align-items:center; gap:4px; min-width:0; }
+  .chat-preview svg{ width:14px; height:14px; flex-shrink:0; color:var(--texto-dim); }
+  .chat-preview.no-leido{ color:var(--texto); font-weight:600; }
+  .badge-no-leido{ flex-shrink:0; min-width:20px; height:20px; padding:0 6px; border-radius:10px;
+    background:linear-gradient(135deg,var(--magenta),var(--cian)); color:#fff; font-size:11px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; position:relative;
+    animation:pulsoBadge 1.4s ease-in-out infinite; }
+  @keyframes pulsoBadge{
+    0%,100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(255,46,196,.55); }
+    50%{ transform:scale(1.12); box-shadow:0 0 8px 3px rgba(255,46,196,.5); }
+  }
+  .badge-no-leido.perdida{ background:#ff2d3f; animation:pulsoBadge 1.4s ease-in-out infinite, glitchBadge 2.4s infinite steps(1); }
+  @keyframes glitchBadge{
+    0%, 82%, 100%{ filter:none; }
+    84%{ filter:brightness(1.8) hue-rotate(30deg); transform:translateX(-1.5px) scale(1.1); }
+    87%{ filter:brightness(1.4) hue-rotate(-20deg); transform:translateX(1.5px) scale(1.1); }
+    90%{ filter:none; transform:scale(1.1); }
+  }
+  @media (prefers-reduced-motion: reduce){ .badge-no-leido{ animation:none; } }
+
+  /* ===== barra inferior de navegación ===== */
+  .tabbar{ position:absolute; left:0; right:0; bottom:0; z-index:5; display:flex;
+    padding-bottom:env(safe-area-inset-bottom); background:rgba(10,0,24,.9); backdrop-filter:blur(14px);
+    border-top:1px solid rgba(255,255,255,.06); }
+  .tab{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    padding:9px 0 7px; color:var(--texto-dim); position:relative; }
+  .tab svg{ width:22px; height:22px; }
+  .tab span{ font-size:10.5px; font-weight:700; }
+  .tab.activo{ color:var(--cian); }
+  .tab .badge-tab{ position:absolute; top:4px; right:calc(50% - 20px); min-width:16px; height:16px; padding:0 4px;
+    border-radius:8px; background:var(--magenta); color:#fff; font-size:9.5px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+
+  .btn-nuevo{ position:absolute; right:20px; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:6;
+    width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--magenta),var(--cian));
+    display:flex; align-items:center; justify-content:center;
+    animation:flotarBoton 2.6s ease-in-out infinite, pulsoGlowBoton 2s ease-in-out infinite; }
+  .btn-nuevo:active{ transform:scale(.92); }
+  .btn-nuevo svg{ width:24px; height:24px; color:#fff; }
+  @keyframes flotarBoton{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-7px); } }
+  @keyframes pulsoGlowBoton{
+    0%,100%{ box-shadow:0 4px 16px rgba(255,46,196,.35), 0 0 0 0 rgba(23,242,255,.4); }
+    50%{ box-shadow:0 8px 26px rgba(255,46,196,.55), 0 0 0 10px rgba(23,242,255,0); }
+  }
+  @media (prefers-reduced-motion: reduce){ .btn-nuevo{ animation:none; } }
+
+  /* ===== menú desplegable del header ===== */
+  .overlay-menu{ position:fixed; inset:0; z-index:15; opacity:0; pointer-events:none; transition:opacity .15s ease; }
+  .overlay-menu.activo{ opacity:1; pointer-events:auto; }
+  .menu-desplegable{ position:absolute; top:calc(56px + env(safe-area-inset-top)); right:20px; z-index:16;
+    background:#1a0630; border-radius:14px; padding:6px; min-width:200px; box-shadow:0 8px 24px rgba(0,0,0,.5);
+    opacity:0; transform:translateY(-8px); transition:opacity .15s ease, transform .15s ease; pointer-events:none; }
+  .menu-desplegable.activo{ opacity:1; transform:translateY(0); pointer-events:auto; }
+
+  /* ===== panel de notificaciones ===== */
+  .panel-notif{ position:absolute; top:calc(56px + env(safe-area-inset-top)); left:16px; right:16px; z-index:16;
+    background:#150022; border-radius:16px; box-shadow:0 10px 28px rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.06);
+    opacity:0; transform:translateY(-10px); transition:opacity .18s ease, transform .18s ease; pointer-events:none; max-height:70vh; overflow:hidden;
+    display:flex; flex-direction:column; }
+  .panel-notif.activo{ opacity:1; transform:translateY(0); pointer-events:auto; }
+  .panel-notif-header{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; flex-shrink:0; }
+  .panel-notif-header h3{ font-size:15px; font-weight:800; color:var(--texto); }
+  .panel-notif-header span{ font-size:11.5px; font-weight:700; color:var(--cian); }
+  .panel-notif-lista{ overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:0 8px 6px; max-height:340px; }
+  .pn-item{ display:flex; align-items:flex-start; gap:10px; padding:10px 8px; border-radius:12px; position:relative;
+    transition:transform .2s ease, opacity .2s ease; touch-action:pan-y; }
+  .pn-item.borrando{ transform:translateX(-100%); opacity:0; }
+  .pn-item.recien-llegada{ animation:destelloNueva 1.6s ease-out; }
+  #btnNotificaciones.recien-llegada svg{ animation:sacudirCampana .5s ease-in-out; }
+  @keyframes sacudirCampana{ 0%,100%{ transform:rotate(0deg); } 25%{ transform:rotate(-15deg); } 50%{ transform:rotate(12deg); } 75%{ transform:rotate(-8deg); } }
+  @keyframes destelloNueva{ 0%{ background:rgba(23,242,255,.25); } 100%{ background:transparent; } }
+  .pn-item:active{ background:rgba(255,255,255,.05); }
+  .pn-item.no-leida::before{ content:""; position:absolute; left:0; top:10px; bottom:10px; width:3px; border-radius:2px;
+    background:linear-gradient(180deg,var(--magenta),var(--cian)); }
+  .pn-avatar{ width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:12px; flex-shrink:0; }
+  .pn-texto{ flex:1; min-width:0; }
+  .pn-texto .pn-titulo{ font-size:12.5px; font-weight:700; color:var(--texto); }
+  .pn-texto .pn-sub{ font-size:11.5px; color:var(--texto-dim); margin-top:1px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pn-hora{ font-size:10px; color:var(--texto-dim); flex-shrink:0; margin-top:2px; }
+  .pn-acciones{ display:flex; gap:6px; margin-top:6px; }
+  .pn-btn{ min-height:26px; padding:0 10px; border-radius:13px; font-size:10.5px; font-weight:700; border:none; }
+  .pn-btn.aceptar{ background:linear-gradient(135deg,var(--magenta),var(--cian)); color:#fff; }
+  .pn-btn.rechazar{ background:rgba(255,255,255,.08); color:var(--texto-dim); }
+  .panel-notif-footer{ padding:8px 12px 12px; flex-shrink:0; }
+  .btn-ver-todas{ width:100%; min-height:38px; border-radius:19px; border:none; background:rgba(255,255,255,.06);
+    color:var(--cian); font-size:12.5px; font-weight:700; }
+  .overlay-notif{ position:fixed; inset:0; z-index:15; opacity:0; pointer-events:none; transition:opacity .15s ease; }
+  .overlay-notif.activo{ opacity:1; pointer-events:auto; }
+  .menu-opcion{ display:flex; align-items:center; gap:10px; padding:12px 12px; border-radius:9px; min-height:44px; }
+  .menu-opcion:active{ background:rgba(255,255,255,.08); }
+  .menu-opcion svg{ width:17px; height:17px; color:var(--texto-dim); flex-shrink:0; }
+  .menu-opcion span{ font-size:13.5px; font-weight:600; color:var(--texto); }
+
+  /* ===== barra de selección múltiple ===== */
+  .barra-seleccion{ display:none; align-items:center; gap:10px; padding:14px 20px 10px; }
+  .barra-seleccion.activa{ display:flex; }
+  .barra-seleccion .btn-cerrar-sel{ width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.06); flex-shrink:0; }
+  .barra-seleccion .btn-cerrar-sel svg{ width:17px; height:17px; color:var(--texto); }
+  .barra-seleccion .contador-sel{ flex:1; font-size:15px; font-weight:700; color:var(--texto); }
+  .barra-seleccion .acciones-sel{ display:flex; gap:6px; }
+  .btn-accion-sel{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.06); }
+  .btn-accion-sel:active{ background:rgba(255,255,255,.14); }
+  .btn-accion-sel svg{ width:18px; height:18px; color:var(--texto); }
+  .btn-accion-sel.eliminar svg{ color:var(--error,#ff5470); }
+
+  .checkbox-sel{ width:24px; height:24px; border-radius:50%; border:2px solid rgba(255,255,255,.25); flex-shrink:0;
+    display:none; align-items:center; justify-content:center; margin-right:2px; }
+  .modo-seleccion .checkbox-sel{ display:flex; }
+  .checkbox-sel.marcado{ background:linear-gradient(135deg,var(--magenta),var(--cian)); border-color:transparent; }
+  .checkbox-sel svg{ width:13px; height:13px; color:#fff; opacity:0; }
+  .checkbox-sel.marcado svg{ opacity:1; }
+  .modo-seleccion .chat-item.marcado{ background:rgba(23,242,255,.08); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+
+  <div class="header">
+    <div class="header-top">
+      <h1>Chats</h1>
+      <div class="header-iconos">
+        <div class="btn-icono" id="btnNotificaciones" style="position:relative;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span id="badgeNotif" style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 4px; border-radius:8px;
+            background:linear-gradient(135deg,var(--magenta),var(--cian)); color:#fff; font-size:9.5px; font-weight:800;
+            display:flex; align-items:center; justify-content:center;">3</span>
+        </div>
+        <div class="btn-icono" id="btnMenuHeader">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.2" fill="currentColor" stroke="none"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="buscador">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="buscarChat" placeholder="Buscar..." />
+    </div>
+    <div class="filtros">
+      <div class="filtro-chip activo" data-filtro="todos">Todos</div>
+      <div class="filtro-chip" data-filtro="no-leidos">No leídos</div>
+      <div class="filtro-chip" data-filtro="grupos">Grupos</div>
+      <div class="filtro-chip" data-filtro="favoritos">Favoritos</div>
+    </div>
+  </div>
+
+  <div class="barra-seleccion" id="barraSeleccion">
+    <div class="btn-cerrar-sel" id="btnCerrarSeleccion">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </div>
+    <div class="contador-sel" id="contadorSel">0 seleccionados</div>
+    <div class="acciones-sel">
+      <div class="btn-accion-sel" id="btnSilenciarSel" title="Silenciar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+      </div>
+      <div class="btn-accion-sel" id="btnArchivarSel" title="Archivar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 6l2-3h14l2 3M10 12h4"/></svg>
+      </div>
+      <div class="btn-accion-sel eliminar" id="btnEliminarSel" title="Eliminar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="lista-wrap">
+    <div class="lista" id="lista"></div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab activo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5C3 7.4 6.8 4 11.5 4S20 7.4 20 11.5 16.2 19 11.5 19c-1 0-2-.2-2.9-.5L4 20l1.2-3.5C3.8 15 3 13.3 3 11.5Z"/></svg>
+      <span>Chats</span>
+      <div class="badge-tab">5</div>
+    </div>
+    <div class="tab" id="tabVideo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg>
+      <span>Video</span>
+    </div>
+    <div class="tab" id="tabNoticias">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>
+      <span>Noticias</span>
+    </div>
+    <div class="tab" id="tabAjustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      <span>Ajustes</span>
+    </div>
+  </div>
+
+  <div class="btn-nuevo" id="btnNuevoChat">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+  </div>
+
+  <div class="overlay-notif" id="overlayNotif"></div>
+  <div class="panel-notif" id="panelNotif">
+    <div class="panel-notif-header">
+      <h3>Notificaciones</h3>
+      <div style="display:flex; gap:12px;">
+        <span id="marcarLeidasPanel">Marcar leídas</span>
+        <span id="limpiarPanel" style="color:var(--texto-dim);">Limpiar</span>
+      </div>
+    </div>
+    <div class="panel-notif-lista" id="panelNotifLista"></div>
+    <div class="panel-notif-footer">
+      <button class="btn-ver-todas" id="btnVerTodasNotif">Ver todas</button>
+    </div>
+  </div>
+
+  <div class="overlay-menu" id="overlayMenu"></div>
+  <div class="menu-desplegable" id="menuDesplegable">
+    <div class="menu-opcion" id="opcionSeleccionar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span>Seleccionar chats</span>
+    </div>
+    <div class="menu-opcion" id="opcionArchivados">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 6l2-3h14l2 3M10 12h4"/></svg>
+      <span>Chats archivados</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const chats = [
+    { id:1, nombre:'gonza_lp', verificado:true, online:true, grupo:false, ultimoMsg:'Dale, te aviso cuando llego', hora:'14:32', noLeidos:2, tipo:'texto' },
+    { id:2, nombre:'Asado del domingo 🍖', verificado:false, online:false, grupo:true, ultimoMsg:'Martu: Yo llevo el hielo', hora:'13:10', noLeidos:5, tipo:'texto' },
+    { id:3, nombre:'flor.sordas', verificado:true, online:true, grupo:false, ultimoMsg:'', hora:'12:45', noLeidos:0, tipo:'video' },
+    { id:4, nombre:'nachodev', verificado:false, online:false, grupo:false, ultimoMsg:'📎 captura_pantalla.png', hora:'Ayer', noLeidos:0, tipo:'archivo' },
+    { id:5, nombre:'Familia ❤️', verificado:false, online:false, grupo:true, ultimoMsg:'Mamá: Llegué bien, beso', hora:'Ayer', noLeidos:0, tipo:'texto' },
+    { id:6, nombre:'sole_lsa', verificado:true, online:false, grupo:false, ultimoMsg:'Perfecto, nos vemos ahí', hora:'Lun', noLeidos:0, tipo:'texto' },
+    { id:7, nombre:'Grupo Trabajo Cowork', verificado:false, online:false, grupo:true, ultimoMsg:'Fede: Subí el archivo nuevo', hora:'Lun', noLeidos:0, tipo:'texto' },
+    { id:8, nombre:'juan_pm', verificado:false, online:true, grupo:false, ultimoMsg:'Jaja buenísimo 😂', hora:'Dom', noLeidos:0, tipo:'texto' }
+  ];
+
+  const lista = document.getElementById('lista');
+
+  function iconoPreview(tipo){
+    if(tipo === 'video') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg><span>Videollamada perdida</span>';
+    if(tipo === 'archivo') return '';
+    return '';
+  }
+
+  function render(filtro = 'todos', busqueda = ''){
+    lista.innerHTML = '';
+    let datos = chats.filter(c => {
+      if(filtro === 'no-leidos') return c.noLeidos > 0;
+      if(filtro === 'grupos') return c.grupo;
+      if(filtro === 'favoritos') return false;
+      return true;
+    });
+    if(busqueda.trim() !== ''){
+      datos = datos.filter(c => c.nombre.toLowerCase().includes(busqueda.toLowerCase()));
+    }
+
+    if(datos.length === 0){
+      lista.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--texto-dim);font-size:13.5px;">No hay chats para mostrar acá.</div>';
+      return;
+    }
+
+    datos.forEach(c => {
+      const wrap = document.createElement('div');
+      wrap.className = 'chat-item-wrap';
+
+      const inicial = c.nombre.replace(/[^\wÀ-ÿ]/g,'')[0]?.toUpperCase() || '?';
+      const previewTexto = c.tipo === 'video' ? '📹 Videollamada perdida' : (c.tipo === 'archivo' ? c.ultimoMsg : c.ultimoMsg);
+
+      wrap.innerHTML = `
+        <div class="chat-acciones">
+          <div class="accion-btn silenciar" data-accion="silenciar" data-id="${c.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            Silenciar
+          </div>
+          <div class="accion-btn archivar" data-accion="archivar" data-id="${c.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 6l2-3h14l2 3M10 12h4"/></svg>
+            Archivar
+          </div>
+          <div class="accion-btn eliminar" data-accion="eliminar" data-id="${c.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Eliminar
+          </div>
+        </div>
+        <div class="chat-item" data-id="${c.id}">
+          <div class="checkbox-sel" data-check="${c.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <div class="avatar-wrap">
+            <div class="avatar ${c.grupo ? 'grupo' : ''}"><span>${inicial}</span></div>
+            ${c.online ? '<div class="punto-online"></div>' : ''}
+          </div>
+          <div class="chat-info">
+            <div class="chat-linea1">
+              <div class="chat-nombre">
+                ${c.nombre}
+                ${c.verificado ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : ''}
+              </div>
+              <div class="chat-hora ${c.noLeidos > 0 ? 'no-leido' : ''}">${c.hora}</div>
+            </div>
+            <div class="chat-linea2">
+              <div class="chat-preview ${c.noLeidos > 0 ? 'no-leido' : ''}">${iconoPreview(c.tipo)}${c.tipo !== 'video' ? previewTexto : ''}</div>
+              ${c.noLeidos > 0 ? `<div class="badge-no-leido">${c.noLeidos}</div>` : ''}
+              ${c.tipo === 'video' ? `<div class="badge-no-leido perdida"></div>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+      lista.appendChild(wrap);
+    });
+
+    activarSwipes();
+  }
+
+  render();
+
+  document.querySelectorAll('.filtro-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.filtro-chip').forEach(c => c.classList.remove('activo'));
+      chip.classList.add('activo');
+      render(chip.dataset.filtro, document.getElementById('buscarChat').value);
+    });
+  });
+
+  document.getElementById('buscarChat').addEventListener('input', (e) => {
+    const filtroActivo = document.querySelector('.filtro-chip.activo').dataset.filtro;
+    render(filtroActivo, e.target.value);
+  });
+
+  // swipe izquierda en cada item para revelar acciones
+  function activarSwipes(){
+    document.querySelectorAll('.chat-item').forEach(item => {
+      let startX = 0, deltaX = 0, activo = false;
+
+      item.addEventListener('touchstart', (e) => {
+        if(modoSeleccion) return;
+        document.querySelectorAll('.chat-item.deslizado').forEach(otro => {
+          if(otro !== item) otro.classList.remove('deslizado');
+        });
+        startX = e.touches[0].clientX;
+        activo = true;
+      }, {passive:true});
+
+      item.addEventListener('touchmove', (e) => {
+        if(!activo || modoSeleccion) return;
+        deltaX = e.touches[0].clientX - startX;
+      }, {passive:true});
+
+      item.addEventListener('touchend', () => {
+        if(modoSeleccion) return;
+        if(deltaX < -60){ item.classList.add('deslizado'); }
+        else if(deltaX > 20){ item.classList.remove('deslizado'); }
+        deltaX = 0; activo = false;
+      }, {passive:true});
+
+      item.addEventListener('click', () => {
+        const id = item.dataset.id;
+        if(modoSeleccion){
+          const checkbox = item.querySelector('.checkbox-sel');
+          toggleSeleccion(id, item, checkbox);
+          return;
+        }
+        if(item.classList.contains('deslizado')){ item.classList.remove('deslizado'); return; }
+        console.log('abrir chat', id);
+      });
+
+      // presión larga también activa el modo selección, marcando ese chat
+      let timerLong;
+      item.addEventListener('touchstart', () => {
+        timerLong = setTimeout(() => {
+          if(!modoSeleccion){
+            activarModoSeleccion();
+            const checkbox = item.querySelector('.checkbox-sel');
+            toggleSeleccion(item.dataset.id, item, checkbox);
+          }
+        }, 500);
+      }, {passive:true});
+      item.addEventListener('touchend', () => clearTimeout(timerLong), {passive:true});
+      item.addEventListener('touchmove', () => clearTimeout(timerLong), {passive:true});
+    });
+
+    document.querySelectorAll('.accion-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log(btn.dataset.accion, 'chat', btn.dataset.id);
+      });
+    });
+  }
+
+  document.getElementById('btnNuevoChat').addEventListener('click', () => console.log('nuevo chat'));
+  // ===== panel desplegable de notificaciones =====
+  const overlayNotif = document.getElementById('overlayNotif');
+  const panelNotif = document.getElementById('panelNotif');
+  const panelNotifLista = document.getElementById('panelNotifLista');
+  const badgeNotif = document.getElementById('badgeNotif');
+
+  let notifsRecientes = [
+    { id:1, autor:'gonza_lp', texto:'Dale, te aviso cuando llego', hora:'14:32', leida:false },
+    { id:2, autor:'nachodev', texto:'quiere agregarte como contacto', hora:'13:10', leida:false, tipo:'solicitud', pendiente:true },
+    { id:3, autor:'flor.sordas', texto:'Videollamada perdida', hora:'12:45', leida:false },
+    { id:4, autor:'Asado del domingo', texto:'martu_bsas: Yo llevo el hielo', hora:'11:20', leida:true },
+    { id:5, autor:'sole_lsa', texto:'aceptó tu solicitud de contacto', hora:'10:05', leida:true },
+    { id:6, autor:'juan_pm', texto:'Jaja buenísimo 😂', hora:'Ayer', leida:true },
+    { id:7, autor:'Sordos Argentinos', texto:'Nueva actualización disponible', hora:'Ayer', leida:true },
+    { id:8, autor:'fede_cowork', texto:'Subí el archivo nuevo', hora:'Lun', leida:true },
+    { id:9, autor:'Familia ❤️', texto:'Mamá: Llegué bien, beso', hora:'Lun', leida:true },
+    { id:10, autor:'Grupo Trabajo Cowork', texto:'Fede: Subí el archivo nuevo', hora:'Lun', leida:true }
+  ];
+
+  function actualizarBadgeNotif(){
+    const noLeidas = notifsRecientes.filter(n => !n.leida).length;
+    badgeNotif.style.display = noLeidas > 0 ? 'flex' : 'none';
+    badgeNotif.textContent = noLeidas;
+  }
+
+  function renderPanelNotif(){
+    panelNotifLista.innerHTML = '';
+    notifsRecientes.forEach(n => {
+      const item = document.createElement('div');
+      item.className = 'pn-item' + (n.leida ? '' : ' no-leida');
+      item.innerHTML = `
+        <div class="pn-avatar">${n.autor[0].toUpperCase()}</div>
+        <div class="pn-texto">
+          <div class="pn-titulo">${n.autor}</div>
+          <div class="pn-sub">${n.texto}</div>
+          ${n.pendiente ? `<div class="pn-acciones">
+            <button class="pn-btn aceptar" data-accion="aceptar" data-id="${n.id}">Aceptar</button>
+            <button class="pn-btn rechazar" data-accion="rechazar" data-id="${n.id}">Rechazar</button>
+          </div>` : ''}
+        </div>
+        <div class="pn-hora">${n.hora}</div>
+      `;
+      if(!n.pendiente){
+        item.addEventListener('click', () => {
+          n.leida = true;
+          renderPanelNotif();
+          actualizarBadgeNotif();
+        });
+      }
+      panelNotifLista.appendChild(item);
+    });
+
+    panelNotifLista.querySelectorAll('.pn-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = +btn.dataset.id;
+        const n = notifsRecientes.find(x => x.id === id);
+        if(n){
+          n.pendiente = false;
+          n.leida = true;
+          n.texto = btn.dataset.accion === 'aceptar' ? 'Ahora son contactos ✓' : 'Solicitud rechazada';
+          renderPanelNotif();
+          actualizarBadgeNotif();
+        }
+      });
+    });
+
+    activarSwipeBorrar();
+  }
+
+  function borrarNotif(id, elemento){
+    if(elemento){
+      elemento.classList.add('borrando');
+      setTimeout(() => {
+        notifsRecientes = notifsRecientes.filter(n => n.id !== id);
+        renderPanelNotif();
+        actualizarBadgeNotif();
+      }, 200);
+    } else {
+      notifsRecientes = notifsRecientes.filter(n => n.id !== id);
+      renderPanelNotif();
+      actualizarBadgeNotif();
+    }
+  }
+
+  function activarSwipeBorrar(){
+    panelNotifLista.querySelectorAll('.pn-item').forEach((item, idx) => {
+      const n = notifsRecientes[idx];
+      if(!n) return;
+      let startX = 0, deltaX = 0, activo = false;
+
+      item.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; activo = true; }, {passive:true});
+      item.addEventListener('touchmove', (e) => {
+        if(!activo) return;
+        deltaX = e.touches[0].clientX - startX;
+        if(deltaX < 0){
+          item.style.transform = `translateX(${Math.max(deltaX, -100)}px)`;
+          item.style.opacity = 1 + (deltaX / 150);
+        }
+      }, {passive:true});
+      item.addEventListener('touchend', () => {
+        if(deltaX < -60){
+          borrarNotif(n.id, item);
+        } else {
+          item.style.transform = 'translateX(0)';
+          item.style.opacity = 1;
+        }
+        deltaX = 0; activo = false;
+      }, {passive:true});
+    });
+  }
+
+  document.getElementById('limpiarPanel').addEventListener('click', () => {
+    notifsRecientes = [];
+    renderPanelNotif();
+    actualizarBadgeNotif();
+  });
+
+  // ===== llegan notificaciones nuevas en cualquier momento, esté o no abierto el panel =====
+  let idNotifSiguiente = 100;
+  const posiblesNuevas = [
+    { autor:'flor.sordas', texto:'Te mandó un audio' },
+    { autor:'Familia ❤️', texto:'Papá: ¿A qué hora llegás?' },
+    { autor:'juan_pm', texto:'Videollamada perdida' },
+    { autor:'Grupo Trabajo Cowork', texto:'Fede: Reunión a las 15hs' },
+    { autor:'martu_bsas', texto:'Te etiquetó en una foto' }
+  ];
+
+  function llegaNotifNueva(){
+    const base = posiblesNuevas[Math.floor(Math.random()*posiblesNuevas.length)];
+    const nueva = {
+      id: idNotifSiguiente++,
+      autor: base.autor,
+      texto: base.texto,
+      hora: new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}),
+      leida: false,
+      nueva: true
+    };
+    notifsRecientes.unshift(nueva);
+    renderPanelNotif();
+    actualizarBadgeNotif();
+
+    const btnCampana = document.getElementById('btnNotificaciones');
+    btnCampana.classList.remove('recien-llegada');
+    void btnCampana.offsetWidth;
+    btnCampana.classList.add('recien-llegada');
+
+    // resalta la que acaba de llegar y después le saca la marca
+    const primerItem = panelNotifLista.querySelector('.pn-item');
+    if(primerItem){
+      primerItem.classList.add('recien-llegada');
+      setTimeout(() => primerItem.classList.remove('recien-llegada'), 1600);
+    }
+  }
+
+  // simula que cada tanto (entre 15 y 30 segundos) llega algo nuevo, como pasaría de verdad
+  function programarProximaNotif(){
+    const espera = 15000 + Math.random()*15000;
+    setTimeout(() => {
+      llegaNotifNueva();
+      programarProximaNotif();
+    }, espera);
+  }
+  programarProximaNotif();
+  renderPanelNotif();
+  actualizarBadgeNotif();
+
+  function abrirPanelNotif(){
+    overlayNotif.classList.add('activo');
+    panelNotif.classList.add('activo');
+  }
+  function cerrarPanelNotif(){
+    overlayNotif.classList.remove('activo');
+    panelNotif.classList.remove('activo');
+  }
+  overlayNotif.addEventListener('click', cerrarPanelNotif);
+
+  document.getElementById('marcarLeidasPanel').addEventListener('click', () => {
+    notifsRecientes.forEach(n => n.leida = true);
+    renderPanelNotif();
+    actualizarBadgeNotif();
+  });
+  document.getElementById('btnVerTodasNotif').addEventListener('click', () => {
+    cerrarPanelNotif();
+    console.log('ir a centro-notificaciones.html (pantalla completa)');
+  });
+
+  document.getElementById('btnNotificaciones').addEventListener('click', abrirPanelNotif);
+  document.getElementById('tabVideo').addEventListener('click', () => console.log('ir a videollamadas'));
+  document.getElementById('tabNoticias').addEventListener('click', () => console.log('ir a noticias'));
+  document.getElementById('tabAjustes').addEventListener('click', () => console.log('ir a ajustes'));
+
+  // ===== menú desplegable "•••" =====
+  const overlayMenu = document.getElementById('overlayMenu');
+  const menuDesplegable = document.getElementById('menuDesplegable');
+
+  document.getElementById('btnMenuHeader').addEventListener('click', () => {
+    overlayMenu.classList.add('activo');
+    menuDesplegable.classList.add('activo');
+  });
+  overlayMenu.addEventListener('click', () => {
+    overlayMenu.classList.remove('activo');
+    menuDesplegable.classList.remove('activo');
+  });
+
+  // ===== modo de selección múltiple =====
+  const appEl = document.getElementById('app');
+  const barraSeleccion = document.getElementById('barraSeleccion');
+  const contadorSel = document.getElementById('contadorSel');
+  let modoSeleccion = false;
+  let seleccionados = new Set();
+
+  function activarModoSeleccion(){
+    modoSeleccion = true;
+    seleccionados.clear();
+    appEl.classList.add('modo-seleccion');
+    barraSeleccion.classList.add('activa');
+    actualizarContador();
+    overlayMenu.classList.remove('activo');
+    menuDesplegable.classList.remove('activo');
+  }
+
+  function salirModoSeleccion(){
+    modoSeleccion = false;
+    seleccionados.clear();
+    appEl.classList.remove('modo-seleccion');
+    barraSeleccion.classList.remove('activa');
+    document.querySelectorAll('.checkbox-sel.marcado').forEach(c => c.classList.remove('marcado'));
+    document.querySelectorAll('.chat-item.marcado').forEach(c => c.classList.remove('marcado'));
+  }
+
+  function actualizarContador(){
+    contadorSel.textContent = seleccionados.size + ' seleccionado' + (seleccionados.size === 1 ? '' : 's');
+  }
+
+  function toggleSeleccion(id, item, checkbox){
+    if(seleccionados.has(id)){
+      seleccionados.delete(id);
+      checkbox.classList.remove('marcado');
+      item.classList.remove('marcado');
+    } else {
+      seleccionados.add(id);
+      checkbox.classList.add('marcado');
+      item.classList.add('marcado');
+    }
+    actualizarContador();
+  }
+
+  document.getElementById('opcionSeleccionar').addEventListener('click', activarModoSeleccion);
+  document.getElementById('btnCerrarSeleccion').addEventListener('click', salirModoSeleccion);
+  document.getElementById('opcionArchivados').addEventListener('click', () => {
+    overlayMenu.classList.remove('activo'); menuDesplegable.classList.remove('activo');
+    console.log('ir a chats archivados');
+  });
+
+  document.getElementById('btnArchivarSel').addEventListener('click', () => {
+    console.log('archivar chats:', [...seleccionados]);
+    salirModoSeleccion();
+  });
+  document.getElementById('btnSilenciarSel').addEventListener('click', () => {
+    console.log('silenciar chats:', [...seleccionados]);
+    salirModoSeleccion();
+  });
+  document.getElementById('btnEliminarSel').addEventListener('click', () => {
+    console.log('eliminar chats:', [...seleccionados]);
+    salirModoSeleccion();
+  });
+</script>
+</body>
+</html>
