@@ -97,7 +97,7 @@
 
     <div class="contenido">
       <div class="perfil-mini" id="irPerfil">
-        <div class="avatar"><span id="letraAvatarAjustes">M</span></div>
+        <div class="avatar" id="avatarAjustes"><span id="letraAvatarAjustes">M</span></div>
         <div class="info">
           <div class="nombre">
             <span id="nombreUsuarioAjustes">martu_bsas</span>
@@ -250,10 +250,13 @@
     const { data: sesionData } = await sb.auth.getSession();
     if(!sesionData.session) return; // si no hay sesión, se queda con los datos de ejemplo
 
-    const { data: miPerfil } = await sb.from('profiles').select('name, is_admin').eq('id', sesionData.session.user.id).single();
+    const { data: miPerfil } = await sb.from('profiles').select('name, is_admin, avatar_url').eq('id', sesionData.session.user.id).single();
     if(miPerfil){
       document.getElementById('nombreUsuarioAjustes').textContent = miPerfil.name;
       document.getElementById('letraAvatarAjustes').textContent = miPerfil.name[0].toUpperCase();
+      if(miPerfil.avatar_url){
+        document.getElementById('avatarAjustes').innerHTML = `<img src="${miPerfil.avatar_url}" alt="Tu foto de perfil" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      }
       if(miPerfil.is_admin){
         const itemAdmin = document.createElement('div');
         itemAdmin.className = 'item';
