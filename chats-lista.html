@@ -759,7 +759,7 @@
       texto: fila.body || '',
       hora: new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}),
       leida: !!fila.read,
-      pendiente: fila.type === 'solicitud' && !fila.read,
+      pendiente: fila.type === 'contact_request' && !fila.read,
       contactRowId: fila.related_id
     }));
 
@@ -780,7 +780,7 @@
           texto: fila.body || '',
           hora: new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}),
           leida: false,
-          pendiente: fila.type === 'solicitud',
+          pendiente: fila.type === 'contact_request',
           contactRowId: fila.related_id
         });
         renderPanelNotif();

@@ -118,10 +118,10 @@
   }
 
   function mapearTipo(tipoDB){
-    if(tipoDB === 'solicitud') return 'solicitud';
-    if(tipoDB === 'mensaje') return 'mensaje';
-    if(tipoDB === 'llamada') return 'llamada';
-    if(tipoDB === 'sistema') return 'sistema';
+    if(tipoDB === 'contact_request') return 'solicitud';
+    if(tipoDB === 'message') return 'mensaje';
+    if(tipoDB === 'call_missed') return 'llamada';
+    if(tipoDB === 'profile_approved') return 'verificacion';
     return 'sistema';
   }
 
@@ -189,7 +189,7 @@
       hora: new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}),
       fecha: fechaGrupo(fila.created_at),
       leida: !!fila.read,
-      pendiente: fila.type === 'solicitud' && !fila.read,
+      pendiente: fila.type === 'contact_request' && !fila.read,
       contactRowId: fila.related_id
     }));
 

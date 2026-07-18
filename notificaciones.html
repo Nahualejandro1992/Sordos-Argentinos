@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Notificaciones</title>
+<style>
+  :root{
+    --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff;
+    --texto:#f4e9ff; --texto-dim:#b79ad1; --rojo:#ff3b30; --azul:#3a86ff;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; overscroll-behavior:none; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+    padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+    overflow:hidden; background:var(--violeta-bg);
+  }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.2; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  .pantalla{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column;
+    overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+
+  .header{ display:flex; align-items:center; gap:6px; padding:10px 8px; flex-shrink:0; }
+  .btn-atras{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.05); }
+  .btn-atras:active{ background:rgba(255,255,255,.12); }
+  .btn-atras svg{ width:20px; height:20px; }
+  .header h2{ font-size:19px; font-weight:800; color:var(--texto); }
+
+  .contenido{ flex:1; padding:6px 20px 40px; }
+
+  .seccion{ margin-top:22px; }
+  .seccion-titulo{ font-size:12px; font-weight:700; color:var(--texto-dim); letter-spacing:.6px; text-transform:uppercase;
+    margin-bottom:10px; padding-left:2px; }
+  .seccion-desc{ margin-top:8px; font-size:12px; color:var(--texto-dim); padding-left:2px; line-height:1.5; }
+
+  .grupo{ border-radius:16px; overflow:hidden; background:rgba(255,255,255,.04); }
+  .item{ display:flex; align-items:center; gap:14px; padding:14px; min-height:52px;
+    border-bottom:1px solid rgba(255,255,255,.05); }
+  .item:last-child{ border-bottom:none; }
+  .item:active{ background:rgba(255,255,255,.05); }
+  .item .icono-item{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .item .icono-item svg{ width:18px; height:18px; }
+  .item .texto{ flex:1; min-width:0; }
+  .item .titulo-item{ font-size:14.5px; font-weight:600; color:var(--texto); }
+  .item .sub-item{ margin-top:1px; font-size:12px; color:var(--texto-dim); }
+
+  .switch{ width:46px; height:27px; border-radius:14px; background:rgba(255,255,255,.12); position:relative; flex-shrink:0; }
+  .switch::after{ content:""; position:absolute; top:2.5px; left:2.5px; width:22px; height:22px; border-radius:50%;
+    background:#fff; transition:transform .2s ease; }
+  .switch.on{ background:linear-gradient(135deg,var(--magenta),var(--cian)); }
+  .switch.on::after{ transform:translateX(19px); }
+  .switch.off-siempre{ opacity:.35; pointer-events:none; }
+
+  .icono-item.cian{ background:rgba(23,242,255,.14); color:var(--cian); }
+  .icono-item.magenta{ background:rgba(255,46,196,.14); color:var(--magenta); }
+  .icono-item.amarillo{ background:rgba(246,180,14,.14); color:#f6b40e; }
+  .icono-item.verde{ background:rgba(91,255,160,.12); color:#5bffa0; }
+
+  /* ===== demo de sirena ===== */
+  .demo-sirena{ margin-top:10px; border-radius:16px; overflow:hidden; height:90px; position:relative;
+    background:#0a0014; display:flex; align-items:center; justify-content:center; }
+  .demo-sirena .franja{ position:absolute; inset:0; opacity:0; }
+  .demo-sirena .franja.roja{ background:var(--rojo); animation:sirenaRoja 1.2s steps(1) infinite; }
+  .demo-sirena .franja.azul{ background:var(--azul); animation:sirenaAzul 1.2s steps(1) infinite; }
+  @keyframes sirenaRoja{ 0%,50%{ opacity:0; } 0.1%,49.9%{ opacity:.55; } 0%{opacity:.55;} 50%{opacity:0;} }
+  @keyframes sirenaAzul{ 0%,50%{ opacity:0; } 50.1%,99.9%{ opacity:.55; } 50%{opacity:.55;} 100%{opacity:0;} }
+  .demo-sirena .txt{ position:relative; z-index:2; color:#fff; font-weight:800; font-size:13px; text-shadow:0 2px 8px rgba(0,0,0,.6); }
+  .demo-sirena.pausado .franja{ animation-play-state:paused !important; opacity:0 !important; }
+
+  @media (prefers-reduced-motion: reduce){
+    .demo-sirena .franja{ animation:none; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+
+  <div class="pantalla">
+    <div class="header">
+      <div class="btn-atras" id="btnAtras">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f4e9ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </div>
+      <h2>Notificaciones</h2>
+    </div>
+
+    <div class="contenido">
+
+      <div class="seccion">
+        <div class="seccion-titulo">General</div>
+        <div class="grupo">
+          <div class="item">
+            <div class="icono-item cian">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Activar notificaciones</div><div class="sub-item">Llave general de todo lo demás</div></div>
+            <div class="switch on" id="switchGeneral"></div>
+          </div>
+          <div class="item">
+            <div class="icono-item magenta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Alertas visuales</div><div class="sub-item">Destello de pantalla al recibir algo</div></div>
+            <div class="switch on" data-switch="alertas_visuales"></div>
+          </div>
+          <div class="item">
+            <div class="icono-item amarillo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Vibración</div><div class="sub-item">Vibrar al recibir mensajes</div></div>
+            <div class="switch on" data-switch="vibracion"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <div class="seccion-titulo">Sirena para urgentes</div>
+        <div class="grupo">
+          <div class="item">
+            <div class="icono-item verde">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5c0 5 4 8.5 9 10.5 5-2 9-5.5 9-10.5v-5L12 2Z"/></svg>
+            </div>
+            <div class="texto"><div class="titulo-item">Sirena roja/blanca/azul</div><div class="sub-item">Para videollamadas entrantes y emergencias</div></div>
+            <div class="switch on" id="switchSirena"></div>
+          </div>
+        </div>
+        <div class="seccion-desc">Cuando te llaman o hay una alerta urgente, toda la pantalla destella en rojo y azul para que no se te pase, incluso si el celular está en otra app.</div>
+
+        <div class="demo-sirena" id="demoSirena">
+          <div class="franja roja"></div>
+          <div class="franja azul"></div>
+          <span class="txt">Así se ve la sirena</span>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <div class="seccion-titulo">Por tipo</div>
+        <div class="grupo">
+          <div class="item">
+            <div class="texto"><div class="titulo-item">Mensajes</div></div>
+            <div class="switch on" data-switch="tipo_mensajes"></div>
+          </div>
+          <div class="item">
+            <div class="texto"><div class="titulo-item">Videollamadas</div></div>
+            <div class="switch on" data-switch="tipo_videollamadas"></div>
+          </div>
+          <div class="item">
+            <div class="texto"><div class="titulo-item">Solicitudes de contacto</div></div>
+            <div class="switch on" data-switch="tipo_solicitudes"></div>
+          </div>
+          <div class="item">
+            <div class="texto"><div class="titulo-item">Novedades de Sordos Argentinos</div></div>
+            <div class="switch" data-switch="tipo_novedades"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const switchGeneral = document.getElementById('switchGeneral');
+  const switchSirena = document.getElementById('switchSirena');
+  const demoSirena = document.getElementById('demoSirena');
+
+  document.querySelectorAll('.switch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      if(sw.classList.contains('off-siempre')) return;
+      sw.classList.toggle('on');
+      if(sw === switchGeneral){
+        aplicarGeneral();
+        guardarPreferencia('notif_general', sw.classList.contains('on'));
+      } else if(sw === switchSirena){
+        guardarPreferencia('notif_sirena', sw.classList.contains('on'));
+      } else if(sw.dataset.switch){
+        guardarPreferencia('notif_' + sw.dataset.switch, sw.classList.contains('on'));
+      }
+    });
+  });
+
+  function aplicarGeneral(){
+    const activo = switchGeneral.classList.contains('on');
+    document.querySelectorAll('[data-switch]').forEach(sw => {
+      sw.classList.toggle('off-siempre', !activo);
+    });
+    switchSirena.classList.toggle('off-siempre', !activo);
+    if(!activo) demoSirena.classList.add('pausado');
+    else demoSirena.classList.remove('pausado');
+  }
+
+  switchSirena.addEventListener('click', () => {
+    demoSirena.classList.toggle('pausado', !switchSirena.classList.contains('on'));
+  });
+
+  document.getElementById('btnAtras').addEventListener('click', () => { window.location.href = 'ajustes.html'; });
+
+  // ===== conexión real: cargar y guardar en Supabase =====
+  let sb = null, miId = null;
+  const toastGuardado = document.createElement('div');
+  toastGuardado.style.cssText = 'position:fixed; left:20px; right:20px; bottom:calc(20px + env(safe-area-inset-bottom)); z-index:50; background:rgba(91,255,160,.14); border:1px solid rgba(91,255,160,.4); border-radius:14px; padding:11px 16px; text-align:center; font-size:13px; color:#5bffa0; font-weight:700; opacity:0; transform:translateY(10px); transition:opacity .2s ease, transform .2s ease; pointer-events:none;';
+  toastGuardado.textContent = '✅ Guardado';
+  document.body.appendChild(toastGuardado);
+  function mostrarToastGuardado(){
+    toastGuardado.style.opacity = '1';
+    toastGuardado.style.transform = 'translateY(0)';
+    setTimeout(() => { toastGuardado.style.opacity = '0'; toastGuardado.style.transform = 'translateY(10px)'; }, 1500);
+  }
+
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined') return;
+    sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session) return;
+    miId = sesionData.session.user.id;
+
+    const { data: perfil } = await sb.from('profiles').select('settings').eq('id', miId).single();
+    const settings = perfil?.settings || {};
+
+    if(settings.notif_general !== undefined){
+      switchGeneral.classList.toggle('on', !!settings.notif_general);
+      aplicarGeneral();
+    }
+    if(settings.notif_sirena !== undefined){
+      switchSirena.classList.toggle('on', !!settings.notif_sirena);
+    }
+    document.querySelectorAll('[data-switch]').forEach(sw => {
+      const clave = 'notif_' + sw.dataset.switch;
+      if(settings[clave] !== undefined){
+        sw.classList.toggle('on', !!settings[clave]);
+      }
+    });
+  });
+
+  async function guardarPreferencia(clave, valor){
+    if(!sb || !miId) return;
+    const { data: perfil } = await sb.from('profiles').select('settings').eq('id', miId).single();
+    const nuevoSettings = { ...(perfil?.settings || {}), [clave]: valor };
+    const { error } = await sb.from('profiles').update({ settings: nuevoSettings }).eq('id', miId);
+    if(!error) mostrarToastGuardado();
+  }
+
+  let startX = 0;
+  document.getElementById('app').addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+  document.getElementById('app').addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if(startX < 24 && dx > 60){ window.location.href = 'ajustes.html'; }
+  }, {passive:true});
+</script>
+</body>
+</html>
