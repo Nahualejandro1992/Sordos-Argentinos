@@ -421,7 +421,7 @@
   async function cargarMensajesReales(){
     const { data, error } = await window.sbChat
       .from('messages')
-      .select('id, sender_id, receiver_id, content, created_at, read_at')
+      .select('id, sender_id, receiver_id, content, attachment_url, attachment_type, created_at, read_at')
       .or(`and(sender_id.eq.${window.miIdChat},receiver_id.eq.${window.otroIdChat}),and(sender_id.eq.${window.otroIdChat},receiver_id.eq.${window.miIdChat})`)
       .order('created_at', { ascending: true });
 
@@ -430,14 +430,22 @@
       return;
     }
 
-    mensajes = (data || []).map(fila => ({
-      id: fila.id,
-      tipo: 'texto',
-      mia: fila.sender_id === window.miIdChat,
-      texto: fila.content,
-      hora: new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}),
-      leido: !!fila.read_at
-    }));
+    mensajes = (data || []).map(fila => {
+      const mia = fila.sender_id === window.miIdChat;
+      const hora = new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+      const leido = !!fila.read_at;
+
+      if(fila.attachment_type === 'image'){
+        return { id: fila.id, tipo:'imagen', mia, src: fila.attachment_url, hora, leido };
+      }
+      if(fila.attachment_type === 'file'){
+        return { id: fila.id, tipo:'archivo', mia, nombre: fila.content || 'archivo', peso:'', hora, leido };
+      }
+      if(fila.attachment_type === 'view_once'){
+        return { id: fila.id, tipo:'viewonce', mia, src: fila.attachment_url, hora, abierto:false, vencido:false };
+      }
+      return { id: fila.id, tipo:'texto', mia, texto: fila.content, hora, leido };
+    });
     render();
 
     // marcamos como leídos todos los mensajes que me mandaron a mí y todavía no había abierto
@@ -461,13 +469,16 @@
         // si ya la agregamos nosotros de forma optimista al mandarla, no la duplicamos
         if(fila.sender_id === window.miIdChat) return;
 
-        mensajes.push({
-          id: fila.id,
-          tipo: 'texto',
-          mia: false,
-          texto: fila.content,
-          hora: new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'})
-        });
+        const hora = new Date(fila.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+        if(fila.attachment_type === 'image'){
+          mensajes.push({ id: fila.id, tipo:'imagen', mia:false, src: fila.attachment_url, hora });
+        } else if(fila.attachment_type === 'file'){
+          mensajes.push({ id: fila.id, tipo:'archivo', mia:false, nombre: fila.content || 'archivo', peso:'', hora });
+        } else if(fila.attachment_type === 'view_once'){
+          mensajes.push({ id: fila.id, tipo:'viewonce', mia:false, src: fila.attachment_url, hora, abierto:false, vencido:false });
+        } else {
+          mensajes.push({ id: fila.id, tipo:'texto', mia:false, texto: fila.content, hora });
+        }
         render();
       })
       .subscribe();
@@ -731,48 +742,78 @@
     overlayAdj.classList.remove('activo');
     hojaAdj.classList.remove('activa');
   });
+  async function subirArchivoYMandar(archivo, tipoAttachment, extra){
+    if(!window.sbChat || !window.miIdChat || !window.otroIdChat) return;
+    const extension = archivo.name.split('.').pop() || 'dat';
+    const ruta = `${window.miIdChat}/${Date.now()}.${extension}`;
+
+    const { error: errorSubida } = await window.sbChat.storage.from('chat-media').upload(ruta, archivo);
+    if(errorSubida){
+      avisarBanner('Error subiendo el archivo: ' + errorSubida.message);
+      return null;
+    }
+    const { data: urlPublica } = window.sbChat.storage.from('chat-media').getPublicUrl(ruta);
+
+    const contenidoTexto = tipoAttachment === 'file' ? archivo.name : '';
+    const { data: filaNueva, error: errorInsert } = await window.sbChat.from('messages').insert({
+      sender_id: window.miIdChat,
+      receiver_id: window.otroIdChat,
+      content: contenidoTexto,
+      attachment_url: urlPublica.publicUrl,
+      attachment_type: tipoAttachment
+    }).select('id, created_at').single();
+
+    if(errorInsert){
+      avisarBanner('Error mandando el archivo: ' + errorInsert.message);
+      return null;
+    }
+    return { url: urlPublica.publicUrl, id: filaNueva.id, hora: new Date(filaNueva.created_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) };
+  }
+
   document.getElementById('opFoto').addEventListener('click', () => document.getElementById('inputArchivoOculto').click());
   document.getElementById('opCamara').addEventListener('click', () => console.log('abrir cámara del celular (requiere permiso, no simulable acá)'));
   document.getElementById('opArchivo').addEventListener('click', () => document.getElementById('inputDocumentoOculto').click());
   document.getElementById('opViewOnce').addEventListener('click', () => document.getElementById('inputViewOnceOculto').click());
 
-  document.getElementById('inputDocumentoOculto').addEventListener('change', (e) => {
+  document.getElementById('inputDocumentoOculto').addEventListener('change', async (e) => {
     const archivo = e.target.files[0];
     if(!archivo) return;
+    overlayAdj.classList.remove('activo');
+    hojaAdj.classList.remove('activa');
     const pesoKB = (archivo.size / 1024).toFixed(0);
     const peso = pesoKB > 1024 ? (pesoKB/1024).toFixed(1) + ' MB' : pesoKB + ' KB';
-    mensajes.push({ tipo:'archivo', mia:true, nombre:archivo.name, peso, hora:new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}), leido:false });
+
+    const resultado = await subirArchivoYMandar(archivo, 'file');
+    if(!resultado) return;
+    mensajes.push({ id: resultado.id, tipo:'archivo', mia:true, nombre:archivo.name, peso, hora:resultado.hora, leido:false });
     render();
-    overlayAdj.classList.remove('activo');
-    hojaAdj.classList.remove('activa');
     e.target.value = '';
   });
 
-  document.getElementById('inputViewOnceOculto').addEventListener('change', (e) => {
+  document.getElementById('inputViewOnceOculto').addEventListener('change', async (e) => {
     const archivo = e.target.files[0];
     if(!archivo) return;
-    const lector = new FileReader();
-    lector.onload = (ev) => {
-      mensajes.push({ tipo:'viewonce', mia:true, src:ev.target.result, hora:new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}), abierto:false, vencido:false });
-      render();
-    };
-    lector.readAsDataURL(archivo);
     overlayAdj.classList.remove('activo');
     hojaAdj.classList.remove('activa');
+
+    const resultado = await subirArchivoYMandar(archivo, 'view_once');
+    if(!resultado) return;
+    mensajes.push({ id: resultado.id, tipo:'viewonce', mia:true, src:resultado.url, hora:resultado.hora, abierto:false, vencido:false });
+    render();
     e.target.value = '';
   });
 
-  document.getElementById('inputArchivoOculto').addEventListener('change', (e) => {
+  document.getElementById('inputArchivoOculto').addEventListener('change', async (e) => {
     const archivo = e.target.files[0];
     if(!archivo) return;
-    const lector = new FileReader();
-    lector.onload = (ev) => {
-      mensajes.push({ tipo:'imagen', mia:true, src:ev.target.result, hora:new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}), leido:false });
-      render();
-    };
-    lector.readAsDataURL(archivo);
     overlayAdj.classList.remove('activo');
     hojaAdj.classList.remove('activa');
+
+    const resultado = await subirArchivoYMandar(archivo, 'image');
+    if(!resultado) return;
+    mensajes.push({ id: resultado.id, tipo:'imagen', mia:true, src:resultado.url, hora:resultado.hora, leido:false });
+    render();
+    e.target.value = '';
   });
 
   document.getElementById('btnAtras').addEventListener('click', () => console.log('volver a la lista de chats'));

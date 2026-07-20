@@ -193,7 +193,9 @@
   document.getElementById('btnMensaje').addEventListener('click', () => console.log('volver al chat'));
   document.getElementById('btnLlamar').addEventListener('click', () => console.log('iniciar videollamada'));
   document.getElementById('btnBuscarChat').addEventListener('click', () => console.log('buscar dentro de este chat'));
-  document.getElementById('irMultimedia').addEventListener('click', () => console.log('ver fotos y videos compartidos'));
+  document.getElementById('irMultimedia').addEventListener('click', () => {
+    if(idContacto) window.location.href = `multimedia-compartida.html?id=${idContacto}`;
+  });
   document.getElementById('irEnlaces').addEventListener('click', () => console.log('ver enlaces compartidos'));
   document.getElementById('irDocumentos').addEventListener('click', () => console.log('ver documentos compartidos'));
   document.getElementById('irMensajesGuardados').addEventListener('click', () => console.log('ver mensajes guardados de este chat'));
