@@ -319,7 +319,11 @@
   document.querySelectorAll('.switch').forEach(sw => sw.addEventListener('click', () => sw.classList.toggle('on')));
   document.getElementById('btnAtras').addEventListener('click', () => { window.history.back(); });
   document.getElementById('btnMensaje').addEventListener('click', () => { window.history.back(); });
-  document.getElementById('btnLlamarGrupo').addEventListener('click', () => console.log('videollamada grupal (aún no conectada)'));
+  document.getElementById('btnLlamarGrupo').addEventListener('click', () => {
+    if(!grupoId) return;
+    const nombreGrupo = document.querySelector('.nombre-grupo').textContent;
+    window.location.href = `videollamada-grupal-real.html?group=${grupoId}&name=${encodeURIComponent(nombreGrupo)}`;
+  });
   document.getElementById('btnAgregar').addEventListener('click', () => console.log('agregar participantes al grupo'));
   document.getElementById('btnAgregarMini').addEventListener('click', () => console.log('agregar participantes al grupo'));
   document.getElementById('btnSalirGrupo').addEventListener('click', async () => {

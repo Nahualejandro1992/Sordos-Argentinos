@@ -826,13 +826,11 @@
     }, 1000);
   }
 
-  // ===== llamada saliente (vos llamás) =====
+  // ===== llamada grupal real =====
   document.getElementById('btnLlamar').addEventListener('click', () => {
-    btnAceptar.style.display = 'none';
-    subLlamada.textContent = '';
-    overlayLlamada.classList.add('activo');
-    estadoLlamada.textContent = 'Llamando al grupo...';
-    timerLlamada = setTimeout(iniciarCronometro, 2200);
+    if(!window.grupoIdActual) return;
+    const nombreGrupo = document.querySelector('.header-nombre')?.textContent || 'Grupo';
+    window.location.href = `videollamada-grupal-real.html?group=${window.grupoIdActual}&name=${encodeURIComponent(nombreGrupo)}`;
   });
 
   // ===== llamada entrante (te llaman a vos) =====

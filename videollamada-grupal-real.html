@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Videollamada grupal</title>
+<style>
+  :root{ --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff; --texto:#f4e9ff; --texto-dim:#b79ad1; --rojo:#ff3b30; --verde:#5bffa0; }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; background:#0a0014;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh; background:#0a0014; display:flex; flex-direction:column; }
+
+  #bannerDiagnostico{ display:none; position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff;
+    padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; text-align:center; line-height:1.5; }
+
+  .header{ display:flex; align-items:center; justify-content:space-between; padding:10px 16px; flex-shrink:0; }
+  .titulo-llamada .nombre{ font-size:15px; font-weight:800; color:#fff; text-align:center; }
+  .titulo-llamada .cronometro{ font-size:12px; color:var(--texto-dim); text-align:center; margin-top:1px; }
+  .btn-icono{ width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; }
+  .btn-icono svg{ width:18px; height:18px; color:#fff; }
+
+  .grid-participantes{ flex:1; padding:8px 10px; display:grid; gap:8px; overflow-y:auto; }
+  .grid-participantes.n1{ grid-template-columns:1fr; }
+  .grid-participantes.n2{ grid-template-columns:1fr; grid-template-rows:1fr 1fr; }
+  .grid-participantes.n3, .grid-participantes.n4{ grid-template-columns:1fr 1fr; }
+  .grid-participantes.n5, .grid-participantes.n6{ grid-template-columns:1fr 1fr; grid-auto-rows:1fr; }
+  .grid-participantes.n7plus{ grid-template-columns:1fr 1fr 1fr; grid-auto-rows:1fr; }
+
+  .tile{ position:relative; border-radius:16px; overflow:hidden; background:#150022; min-height:100px; }
+  .tile video{ width:100%; height:100%; object-fit:cover; }
+  .tile.local video{ transform:scaleX(-1); }
+  .tile .avatar-tile{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .tile .avatar-tile span{ width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:20px; }
+  .tile .nombre-tile{ position:absolute; left:8px; bottom:8px; font-size:11px; font-weight:700; color:#fff;
+    background:rgba(0,0,0,.4); padding:2px 8px; border-radius:8px; z-index:2; }
+
+  .aviso-llamando{ margin:0 16px 6px; text-align:center; font-size:11.5px; color:#f6b40e; font-weight:600; min-height:16px; }
+
+  .barra-controles{ display:flex; align-items:center; justify-content:center; gap:14px; padding:12px 16px calc(16px + env(safe-area-inset-bottom)); }
+  .btn-control{ width:54px; height:54px; border-radius:50%; background:rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; }
+  .btn-control svg{ width:22px; height:22px; color:#fff; }
+  .btn-control.activo{ background:#fff; }
+  .btn-control.activo svg{ color:#0a0014; }
+  .btn-control.colgar{ width:60px; background:var(--rojo); }
+  .btn-control:active{ transform:scale(.92); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="bannerDiagnostico"></div>
+
+  <div class="header">
+    <div class="btn-icono" id="btnMinimizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+    <div class="titulo-llamada">
+      <div class="nombre" id="nombreGrupoLlamada">Grupo</div>
+      <div class="cronometro" id="cronometro">00:00</div>
+    </div>
+    <div style="width:38px;"></div>
+  </div>
+
+  <div class="aviso-llamando" id="avisoLlamando"></div>
+
+  <div class="grid-participantes" id="gridParticipantes"></div>
+
+  <div class="barra-controles">
+    <div class="btn-control" id="btnMic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M9 22h6"/></svg></div>
+    <div class="btn-control activo" id="btnCam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg></div>
+    <div class="btn-control colgar" id="btnColgar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 14 14M19 5 5 19"/></svg></div>
+  </div>
+</div>
+
+<script>
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+  function avisar(texto){
+    const b = document.getElementById('bannerDiagnostico');
+    b.style.display = 'block';
+    b.textContent = texto;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const grupoId = params.get('group');
+  const grupoNombre = params.get('name') || 'Grupo';
+  document.getElementById('nombreGrupoLlamada').textContent = grupoNombre;
+
+  const CONFIG_ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+  let sb, miId, miNombre, streamLocal, canal;
+  const peers = {}; // { userId: { pc, nombre } }
+  const gridParticipantes = document.getElementById('gridParticipantes');
+  const avisoLlamando = document.getElementById('avisoLlamando');
+
+  function actualizarGrilla(){
+    const total = Object.keys(peers).length + 1; // +1 por mí
+    gridParticipantes.className = 'grid-participantes ' + (
+      total <= 1 ? 'n1' : total === 2 ? 'n2' : total <= 4 ? 'n4' : total <= 6 ? 'n6' : 'n7plus'
+    );
+  }
+
+  function crearTileLocal(){
+    const tile = document.createElement('div');
+    tile.className = 'tile local';
+    tile.id = 'tile-local';
+    tile.innerHTML = `<video id="videoLocal" autoplay playsinline muted></video><div class="nombre-tile">Vos</div>`;
+    gridParticipantes.appendChild(tile);
+  }
+
+  function crearTilePeer(userId, nombre){
+    let tile = document.getElementById('tile-' + userId);
+    if(tile) return tile;
+    tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.id = 'tile-' + userId;
+    tile.innerHTML = `
+      <div class="avatar-tile"><span>${nombre[0].toUpperCase()}</span></div>
+      <video autoplay playsinline style="display:none;"></video>
+      <div class="nombre-tile">${nombre}</div>
+    `;
+    gridParticipantes.appendChild(tile);
+    actualizarGrilla();
+    return tile;
+  }
+
+  function quitarTilePeer(userId){
+    const tile = document.getElementById('tile-' + userId);
+    if(tile) tile.remove();
+    actualizarGrilla();
+  }
+
+  function crearPeerConnection(otroId, otroNombre, esIniciador){
+    const pc = new RTCPeerConnection(CONFIG_ICE);
+    peers[otroId] = { pc, nombre: otroNombre };
+
+    streamLocal.getTracks().forEach(track => pc.addTrack(track, streamLocal));
+
+    pc.ontrack = (e) => {
+      const tile = crearTilePeer(otroId, otroNombre);
+      const video = tile.querySelector('video');
+      video.srcObject = e.streams[0];
+      video.style.display = 'block';
+      tile.querySelector('.avatar-tile').style.display = 'none';
+    };
+
+    pc.onicecandidate = (e) => {
+      if(e.candidate){
+        canal.send({ type:'broadcast', event:'ice-candidate', payload:{ de: miId, para: otroId, candidate: e.candidate } });
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      if(['disconnected','failed','closed'].includes(pc.connectionState)){
+        quitarTilePeer(otroId);
+        delete peers[otroId];
+      }
+    };
+
+    if(esIniciador){
+      pc.onnegotiationneeded = async () => {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        canal.send({ type:'broadcast', event:'offer', payload:{ de: miId, deNombre: miNombre, para: otroId, sdp: offer } });
+      };
+    }
+
+    return pc;
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined'){
+      avisar('⚠️ No se pudo cargar la conexión a Supabase.');
+      return;
+    }
+    sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session){
+      avisar('⚠️ Necesitás iniciar sesión primero.');
+      setTimeout(() => window.location.href = 'login.html', 1500);
+      return;
+    }
+    miId = sesionData.session.user.id;
+
+    if(!grupoId){
+      avisar('⚠️ Falta saber de qué grupo se trata (?group= en la URL).');
+      return;
+    }
+
+    const { data: miPerfil } = await sb.from('profiles').select('name').eq('id', miId).single();
+    miNombre = miPerfil?.name || 'Alguien';
+
+    try{
+      streamLocal = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      crearTileLocal();
+      document.getElementById('videoLocal').srcObject = streamLocal;
+      actualizarGrilla();
+    } catch(err){
+      avisar('⚠️ Necesitás dar permiso de cámara y micrófono.');
+      return;
+    }
+
+    canal = sb.channel('group-call-' + grupoId, { config: { broadcast: { self: false } } });
+
+    canal
+      .on('broadcast', { event: 'peer-joined' }, async ({ payload }) => {
+        if(payload.id === miId) return;
+        avisoLlamando.textContent = '';
+        // yo inicio la conexión solo si mi id es "menor" alfabéticamente (para no duplicar)
+        const esIniciador = miId < payload.id;
+        if(!peers[payload.id]){
+          crearTilePeer(payload.id, payload.nombre);
+          crearPeerConnection(payload.id, payload.nombre, esIniciador);
+        }
+      })
+      .on('broadcast', { event: 'offer' }, async ({ payload }) => {
+        if(payload.para !== miId) return;
+        let pc = peers[payload.de]?.pc;
+        if(!pc){
+          crearTilePeer(payload.de, payload.deNombre);
+          pc = crearPeerConnection(payload.de, payload.deNombre, false);
+        }
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        canal.send({ type:'broadcast', event:'answer', payload:{ de: miId, para: payload.de, sdp: answer } });
+      })
+      .on('broadcast', { event: 'answer' }, async ({ payload }) => {
+        if(payload.para !== miId) return;
+        const pc = peers[payload.de]?.pc;
+        if(pc) await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+      })
+      .on('broadcast', { event: 'ice-candidate' }, async ({ payload }) => {
+        if(payload.para !== miId) return;
+        const pc = peers[payload.de]?.pc;
+        if(pc){ try{ await pc.addIceCandidate(payload.candidate); } catch(err){} }
+      })
+      .on('broadcast', { event: 'peer-left' }, ({ payload }) => {
+        if(peers[payload.id]){
+          peers[payload.id].pc.close();
+          delete peers[payload.id];
+          quitarTilePeer(payload.id);
+        }
+      })
+      .subscribe((status) => {
+        if(status === 'SUBSCRIBED'){
+          avisoLlamando.textContent = 'Avisando al resto del grupo...';
+          canal.send({ type:'broadcast', event:'peer-joined', payload:{ id: miId, nombre: miNombre } });
+        }
+      });
+  });
+
+  function colgar(){
+    if(canal){
+      canal.send({ type:'broadcast', event:'peer-left', payload:{ id: miId } });
+      sb.removeChannel(canal);
+    }
+    Object.values(peers).forEach(p => p.pc.close());
+    if(streamLocal) streamLocal.getTracks().forEach(t => t.stop());
+    window.location.href = `grupo-info.html?group=${grupoId}`;
+  }
+
+  document.getElementById('btnColgar').addEventListener('click', colgar);
+  document.getElementById('btnMinimizar').addEventListener('click', () => window.history.back());
+
+  document.getElementById('btnMic').addEventListener('click', function(){
+    this.classList.toggle('activo');
+    if(streamLocal) streamLocal.getAudioTracks().forEach(t => t.enabled = !this.classList.contains('activo'));
+  });
+  document.getElementById('btnCam').addEventListener('click', function(){
+    this.classList.toggle('activo');
+    if(streamLocal) streamLocal.getVideoTracks().forEach(t => t.enabled = this.classList.contains('activo'));
+  });
+
+  let seg = 0;
+  setInterval(() => {
+    seg++;
+    const m = String(Math.floor(seg/60)).padStart(2,'0');
+    const s = String(seg%60).padStart(2,'0');
+    document.getElementById('cronometro').textContent = `${m}:${s}`;
+  }, 1000);
+</script>
+</body>
+</html>
