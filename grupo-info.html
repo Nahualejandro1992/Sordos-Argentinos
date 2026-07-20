@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Info del grupo</title>
+<style>
+  :root{ --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff; --texto:#f4e9ff; --texto-dim:#b79ad1; --verde:#5bffa0; --error:#ff5470; }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  input{ font-size:16px; font-family:inherit; }
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); overflow:hidden; background:var(--violeta-bg); }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.15; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  .pantalla{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .header{ display:flex; align-items:center; padding:10px 8px; flex-shrink:0; }
+  .btn-atras{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.05); }
+  .btn-atras svg{ width:20px; height:20px; color:var(--texto); }
+
+  .perfil-top{ display:flex; flex-direction:column; align-items:center; padding:6px 20px 20px; }
+  .avatar-grupo{ width:92px; height:92px; border-radius:50%; background:linear-gradient(135deg,#ff9e00,#ff006e);
+    display:flex; align-items:center; justify-content:center; font-size:36px; }
+  .nombre-grupo{ margin-top:14px; font-size:19px; font-weight:800; color:var(--texto); }
+  .meta-grupo{ margin-top:4px; font-size:12.5px; color:var(--texto-dim); }
+
+  .acciones{ display:flex; gap:24px; margin-top:16px; }
+  .btn-accion-circ{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .btn-accion-circ .icono{ width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; }
+  .btn-accion-circ .icono svg{ width:21px; height:21px; color:var(--texto); }
+  .btn-accion-circ span{ font-size:11px; color:var(--texto-dim); font-weight:600; }
+
+  .contenido{ padding:0 20px 30px; }
+  .seccion{ margin-top:20px; }
+  .seccion-titulo{ font-size:12px; font-weight:700; color:var(--texto-dim); letter-spacing:.6px; text-transform:uppercase; margin-bottom:10px;
+    display:flex; align-items:center; justify-content:space-between; }
+  .btn-agregar-mini{ font-size:11.5px; font-weight:700; color:var(--cian); }
+
+  .buscador{ margin-bottom:10px; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.05);
+    border:1.5px solid rgba(255,255,255,.1); border-radius:12px; padding:0 12px; min-height:40px; }
+  .buscador svg{ width:15px; height:15px; color:var(--texto-dim); flex-shrink:0; }
+  .buscador input{ flex:1; background:transparent; border:none; outline:none; color:var(--texto); min-height:40px; font-size:13.5px; }
+  .buscador input::placeholder{ color:rgba(183,154,209,.5); }
+
+  .grupo{ border-radius:16px; overflow:hidden; background:rgba(255,255,255,.04); }
+  .item{ display:flex; align-items:center; gap:14px; padding:12px 14px; min-height:52px; border-bottom:1px solid rgba(255,255,255,.05); position:relative; }
+  .item:last-child{ border-bottom:none; }
+  .item .icono-item{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .item .icono-item svg{ width:18px; height:18px; }
+  .item .texto{ flex:1; min-width:0; }
+  .item .titulo-item{ font-size:14.5px; font-weight:600; color:var(--texto); }
+  .item .sub-item{ margin-top:1px; font-size:12px; color:var(--texto-dim); }
+  .chevron{ width:17px; height:17px; color:var(--texto-dim); flex-shrink:0; }
+  .cantidad{ font-size:13px; color:var(--texto-dim); font-weight:700; }
+
+  .switch{ width:46px; height:27px; border-radius:14px; background:rgba(255,255,255,.12); position:relative; flex-shrink:0; }
+  .switch::after{ content:""; position:absolute; top:2.5px; left:2.5px; width:22px; height:22px; border-radius:50%; background:#fff; transition:transform .2s ease; }
+  .switch.on{ background:linear-gradient(135deg,var(--magenta),var(--cian)); }
+  .switch.on::after{ transform:translateX(19px); }
+
+  .icono-item.cian{ background:rgba(23,242,255,.14); color:var(--cian); }
+  .icono-item.magenta{ background:rgba(255,46,196,.14); color:var(--magenta); }
+  .icono-item.amarillo{ background:rgba(246,180,14,.14); color:#f6b40e; }
+  .icono-item.rojo{ background:rgba(255,84,112,.14); color:var(--error); }
+
+  /* ===== lista de miembros ===== */
+  .miembro{ display:flex; align-items:center; gap:12px; padding:10px 14px; min-height:56px; border-bottom:1px solid rgba(255,255,255,.05); position:relative; }
+  .miembro:last-child{ border-bottom:none; }
+  .avatar-m{ width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:14px; flex-shrink:0; position:relative; }
+  .punto-online{ position:absolute; bottom:0; right:0; width:10px; height:10px; border-radius:50%; background:var(--verde); border:2px solid var(--violeta-bg); }
+  .info-m{ flex:1; min-width:0; }
+  .nombre-m{ font-size:14px; font-weight:700; color:var(--texto); display:flex; align-items:center; gap:5px; }
+  .nombre-m svg{ width:12px; height:12px; color:var(--cian); }
+  .badge-admin{ font-size:9.5px; font-weight:800; color:#f6b40e; background:rgba(246,180,14,.12); padding:1px 6px; border-radius:6px; }
+  .estado-m{ margin-top:1px; font-size:11.5px; color:var(--texto-dim); }
+  .btn-mas{ width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .btn-mas svg{ width:17px; height:17px; color:var(--texto-dim); }
+
+  .item-peligro .titulo-item{ color:var(--error); }
+
+  /* ===== hoja de opciones por miembro ===== */
+  .overlay-m{ position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:20; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  .overlay-m.activo{ opacity:1; pointer-events:auto; }
+  .hoja-m{ position:fixed; left:0; right:0; bottom:0; background:#150022; border-radius:20px 20px 0 0; z-index:21;
+    transform:translateY(100%); transition:transform .25s cubic-bezier(.22,.9,.28,1); padding:8px 20px calc(20px + env(safe-area-inset-bottom)); }
+  .hoja-m.activa{ transform:translateY(0); }
+  .hoja-m .manija{ width:40px; height:4px; border-radius:3px; background:rgba(255,255,255,.2); margin:8px auto 12px; }
+  .hoja-m h3{ font-size:15px; font-weight:800; color:var(--texto); margin-bottom:6px; }
+  .opcion-m{ display:flex; align-items:center; gap:12px; padding:12px 4px; min-height:48px; }
+  .opcion-m svg{ width:19px; height:19px; flex-shrink:0; color:var(--texto); }
+  .opcion-m span{ font-size:14px; font-weight:600; color:var(--texto); }
+  .opcion-m.peligro svg, .opcion-m.peligro span{ color:var(--error); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+  <div class="pantalla">
+    <div class="header">
+      <div class="btn-atras" id="btnAtras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    </div>
+
+    <div class="perfil-top">
+      <div class="avatar-grupo">🍖</div>
+      <div class="nombre-grupo">Asado del domingo</div>
+      <div class="meta-grupo" id="metaGrupo">Grupo · 7 participantes</div>
+
+      <div class="acciones">
+        <div class="btn-accion-circ" id="btnMensaje"><div class="icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5C3 7.4 6.8 4 11.5 4S20 7.4 20 11.5 16.2 19 11.5 19c-1 0-2-.2-2.9-.5L4 20l1.2-3.5C3.8 15 3 13.3 3 11.5Z"/></svg></div><span>Mensaje</span></div>
+        <div class="btn-accion-circ" id="btnLlamarGrupo"><div class="icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="12" height="10" rx="2"/><path d="M14.5 10.5 21 8v8l-6.5-2.5"/></svg></div><span>Llamar</span></div>
+        <div class="btn-accion-circ" id="btnAgregar"><div class="icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div><span>Agregar</span></div>
+      </div>
+    </div>
+
+    <div class="contenido">
+      <div class="seccion">
+        <div class="seccion-titulo">
+          <span id="tituloParticipantes">Participantes (7)</span>
+          <span class="btn-agregar-mini" id="btnAgregarMini">+ Agregar</span>
+        </div>
+        <div class="buscador">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="buscarMiembro" placeholder="Buscar en el grupo..." />
+        </div>
+        <div class="grupo" id="listaMiembros"></div>
+      </div>
+
+      <div class="seccion">
+        <div class="seccion-titulo">Contenido compartido</div>
+        <div class="grupo">
+          <div class="item">
+            <div class="icono-item cian"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+            <div class="texto"><div class="titulo-item">Fotos y videos</div></div>
+            <span class="cantidad">9</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="item">
+            <div class="icono-item amarillo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg></div>
+            <div class="texto"><div class="titulo-item">Documentos</div></div>
+            <span class="cantidad">2</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <div class="seccion-titulo">Opciones del grupo</div>
+        <div class="grupo">
+          <div class="item">
+            <div class="icono-item magenta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div>
+            <div class="texto"><div class="titulo-item">Silenciar notificaciones</div></div>
+            <div class="switch" id="switchSilenciarGrupo"></div>
+          </div>
+          <div class="item">
+            <div class="icono-item cian"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+            <div class="texto"><div class="titulo-item">Editar nombre y foto</div></div>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <div class="grupo">
+          <div class="item item-peligro" id="btnSalirGrupo">
+            <div class="icono-item rojo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></div>
+            <div class="texto"><div class="titulo-item">Salir del grupo</div></div>
+          </div>
+          <div class="item item-peligro" id="btnReportarGrupo">
+            <div class="icono-item rojo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+            <div class="texto"><div class="titulo-item">Reportar grupo</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay-m" id="overlayM"></div>
+  <div class="hoja-m" id="hojaM">
+    <div class="manija"></div>
+    <h3 id="nombreHojaM">gonza_lp</h3>
+    <div class="opcion-m" id="opVerPerfilM">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span>Ver perfil</span>
+    </div>
+    <div class="opcion-m" id="opMensajeM">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5C3 7.4 6.8 4 11.5 4S20 7.4 20 11.5 16.2 19 11.5 19c-1 0-2-.2-2.9-.5L4 20l1.2-3.5C3.8 15 3 13.3 3 11.5Z"/></svg>
+      <span>Mandarle mensaje privado</span>
+    </div>
+    <div class="opcion-m" id="opHacerAdminM">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5v5c0 5 4 8.5 9 10.5 5-2 9-5.5 9-10.5v-5L12 2Z"/></svg>
+      <span id="textoHacerAdmin">Hacer administrador</span>
+    </div>
+    <div class="opcion-m peligro" id="opSacarM">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="23" y2="14"/><line x1="23" y1="8" x2="17" y2="14"/></svg>
+      <span>Sacar del grupo</span>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const grupoId = params.get('group') || params.get('id');
+
+  let miembros = [];
+  let sb = null, miId = null, soyAdmin = false;
+
+  function avisarBannerGI(texto){
+    let b = document.getElementById('bannerDiagnosticoGI');
+    if(!b){
+      b = document.createElement('div');
+      b.id = 'bannerDiagnosticoGI';
+      b.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; font-family:sans-serif; text-align:center; line-height:1.5;';
+      document.body.prepend(b);
+    }
+    b.textContent = texto;
+  }
+
+  const listaMiembros = document.getElementById('listaMiembros');
+  const tituloParticipantes = document.getElementById('tituloParticipantes');
+  const metaGrupo = document.getElementById('metaGrupo');
+
+  function actualizarContadores(){
+    tituloParticipantes.textContent = `Participantes (${miembros.length})`;
+    metaGrupo.textContent = `Grupo · ${miembros.length} participantes`;
+  }
+
+  function render(busqueda){
+    busqueda = busqueda || '';
+    listaMiembros.innerHTML = '';
+    const filtrados = miembros.filter(m => m.nombre.toLowerCase().includes(busqueda.toLowerCase()));
+    filtrados.sort((a,b) => (b.admin - a.admin));
+
+    filtrados.forEach(m => {
+      const fila = document.createElement('div');
+      fila.className = 'miembro';
+      const inicial = m.nombre[0].toUpperCase();
+      fila.innerHTML = `
+        <div class="avatar-m"><span>${inicial}</span>${m.online ? '<div class="punto-online"></div>' : ''}</div>
+        <div class="info-m">
+          <div class="nombre-m">
+            ${m.esVos ? 'Vos' : m.nombre}
+            ${m.verificado ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : ''}
+            ${m.admin ? '<span class="badge-admin">ADMIN</span>' : ''}
+          </div>
+          <div class="estado-m">${m.esVos ? '' : (m.ultimaVez || '')}</div>
+        </div>
+        ${!m.esVos && soyAdmin ? `<div class="btn-mas" data-id="${m.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.2" fill="currentColor" stroke="none"/></svg></div>` : ''}
+      `;
+      if(!m.esVos){
+        fila.addEventListener('click', (e) => {
+          if(e.target.closest('.btn-mas')) return;
+          window.location.href = `info-contacto.html?id=${m.id}`;
+        });
+      }
+      listaMiembros.appendChild(fila);
+    });
+
+    listaMiembros.querySelectorAll('.btn-mas').forEach(btn => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); abrirHojaM(btn.dataset.id); });
+    });
+
+    actualizarContadores();
+  }
+
+  document.getElementById('buscarMiembro').addEventListener('input', (e) => render(e.target.value));
+
+  const overlayM = document.getElementById('overlayM');
+  const hojaM = document.getElementById('hojaM');
+  const nombreHojaM = document.getElementById('nombreHojaM');
+  const textoHacerAdmin = document.getElementById('textoHacerAdmin');
+  let miembroActivo = null;
+
+  function abrirHojaM(id){
+    miembroActivo = miembros.find(m => String(m.id) === String(id));
+    if(!miembroActivo) return;
+    nombreHojaM.textContent = miembroActivo.nombre;
+    textoHacerAdmin.textContent = miembroActivo.admin ? 'Quitar como administrador' : 'Hacer administrador';
+    overlayM.classList.add('activo');
+    hojaM.classList.add('activa');
+  }
+  function cerrarHojaM(){
+    overlayM.classList.remove('activo');
+    hojaM.classList.remove('activa');
+  }
+  overlayM.addEventListener('click', cerrarHojaM);
+
+  document.getElementById('opVerPerfilM').addEventListener('click', () => {
+    if(miembroActivo) window.location.href = `info-contacto.html?id=${miembroActivo.id}`;
+  });
+  document.getElementById('opMensajeM').addEventListener('click', () => {
+    if(miembroActivo) window.location.href = `chat-individual.html?with=${miembroActivo.id}&name=${encodeURIComponent(miembroActivo.nombre)}`;
+  });
+  document.getElementById('opHacerAdminM').addEventListener('click', async () => {
+    if(!miembroActivo || !sb) return;
+    const nuevoValor = !miembroActivo.admin;
+    const { error } = await sb.from('group_members').update({ is_admin: nuevoValor }).eq('group_id', grupoId).eq('user_id', miembroActivo.id);
+    if(!error){
+      miembroActivo.admin = nuevoValor;
+      render(document.getElementById('buscarMiembro').value);
+    }
+    cerrarHojaM();
+  });
+  document.getElementById('opSacarM').addEventListener('click', async () => {
+    if(!miembroActivo || !sb) return;
+    const { error } = await sb.from('group_members').delete().eq('group_id', grupoId).eq('user_id', miembroActivo.id);
+    if(!error){
+      miembros = miembros.filter(m => m.id !== miembroActivo.id);
+      render(document.getElementById('buscarMiembro').value);
+    }
+    cerrarHojaM();
+  });
+
+  document.querySelectorAll('.switch').forEach(sw => sw.addEventListener('click', () => sw.classList.toggle('on')));
+  document.getElementById('btnAtras').addEventListener('click', () => { window.history.back(); });
+  document.getElementById('btnMensaje').addEventListener('click', () => { window.history.back(); });
+  document.getElementById('btnLlamarGrupo').addEventListener('click', () => console.log('videollamada grupal (aún no conectada)'));
+  document.getElementById('btnAgregar').addEventListener('click', () => console.log('agregar participantes al grupo'));
+  document.getElementById('btnAgregarMini').addEventListener('click', () => console.log('agregar participantes al grupo'));
+  document.getElementById('btnSalirGrupo').addEventListener('click', async () => {
+    if(!sb || !miId || !grupoId) return;
+    const confirmar = window.confirm('¿Salir de este grupo?');
+    if(!confirmar) return;
+    await sb.from('group_members').delete().eq('group_id', grupoId).eq('user_id', miId);
+    window.location.href = 'chats-lista.html';
+  });
+  document.getElementById('btnReportarGrupo').addEventListener('click', () => console.log('reportar grupo'));
+
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined'){
+      avisarBannerGI('⚠️ No se pudo cargar la conexión a Supabase.');
+      return;
+    }
+    sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session){
+      avisarBannerGI('⚠️ Necesitás iniciar sesión primero. Te llevamos al login...');
+      setTimeout(() => window.location.href = 'login.html', 1500);
+      return;
+    }
+    miId = sesionData.session.user.id;
+
+    if(!grupoId){
+      avisarBannerGI('⚠️ Falta saber de qué grupo se trata (falta ?group= en la URL).');
+      return;
+    }
+
+    const { data: grupo } = await sb.from('groups').select('name, avatar_emoji').eq('id', grupoId).single();
+    if(grupo){
+      document.querySelector('.nombre-grupo').textContent = grupo.name;
+      document.querySelector('.avatar-grupo').textContent = grupo.avatar_emoji || '💬';
+    }
+
+    const { data, error } = await sb
+      .from('group_members')
+      .select('user_id, is_admin, profiles:user_id(id,name,status)')
+      .eq('group_id', grupoId);
+
+    if(error){
+      avisarBannerGI('Error cargando miembros: ' + error.message);
+      return;
+    }
+
+    miembros = (data || []).filter(f => f.profiles).map(f => ({
+      id: f.profiles.id,
+      nombre: f.profiles.id === miId ? f.profiles.name : f.profiles.name,
+      verificado: f.profiles.status === 'verified',
+      online: false,
+      admin: !!f.is_admin,
+      esVos: f.profiles.id === miId
+    }));
+
+    const yo = miembros.find(m => m.esVos);
+    soyAdmin = !!(yo && yo.admin);
+
+    render();
+  });
+</script>
+</body>
+</html>

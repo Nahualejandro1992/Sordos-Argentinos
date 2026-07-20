@@ -802,8 +802,12 @@
   });
 
   document.getElementById('btnAtras').addEventListener('click', () => console.log('volver a la lista de chats'));
-  document.getElementById('btnVerPerfil').addEventListener('click', () => console.log('ver perfil de gonza_lp → abrir info-contacto.html'));
-  document.getElementById('btnVerPerfil2').addEventListener('click', () => console.log('ver perfil de gonza_lp → abrir info-contacto.html'));
+  function irAInfoGrupo(){
+    if(!window.grupoIdActual) return;
+    window.location.href = `grupo-info.html?group=${window.grupoIdActual}`;
+  }
+  document.getElementById('btnVerPerfil').addEventListener('click', irAInfoGrupo);
+  document.getElementById('btnVerPerfil2').addEventListener('click', irAInfoGrupo);
   const overlayLlamada = document.getElementById('overlayLlamada');
   const estadoLlamada = document.getElementById('estadoLlamada');
   const subLlamada = document.getElementById('subLlamada');
