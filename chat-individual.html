@@ -842,13 +842,11 @@
     }, 1000);
   }
 
-  // ===== llamada saliente (vos llamás) =====
+  // ===== llamada saliente real (vos llamás) =====
   document.getElementById('btnLlamar').addEventListener('click', () => {
-    btnAceptar.style.display = 'none';
-    subLlamada.textContent = '';
-    overlayLlamada.classList.add('activo');
-    estadoLlamada.textContent = 'Llamando...';
-    timerLlamada = setTimeout(iniciarCronometro, 2200);
+    if(!window.otroIdChat){ console.warn('todavía no está lista la conexión'); return; }
+    const nombre = document.getElementById('nombreHeader')?.textContent || 'Alguien';
+    window.location.href = `videollamada-real.html?with=${window.otroIdChat}&name=${encodeURIComponent(nombre)}&role=caller`;
   });
 
   // ===== llamada entrante (te llaman a vos) =====
