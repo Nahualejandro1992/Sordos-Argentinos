@@ -414,6 +414,7 @@
     }
     window.otroIdChat = otroIdUrl;
 
+    await cargarFavoritosStickers();
     await cargarMensajesReales();
     suscribirseAMensajesNuevos();
   });
@@ -446,6 +447,20 @@
       }
       return { id: fila.id, tipo:'texto', mia, texto: fila.content, hora, leido };
     });
+
+    // traemos las reacciones que ya tenían estos mensajes
+    const idsMensajes = mensajes.map(m => m.id).filter(Boolean);
+    if(idsMensajes.length > 0){
+      const { data: reaccionesData } = await window.sbChat
+        .from('message_reactions')
+        .select('message_id, emoji')
+        .in('message_id', idsMensajes);
+      (reaccionesData || []).forEach(r => {
+        const msj = mensajes.find(m => m.id === r.message_id);
+        if(msj) msj.reaccion = r.emoji;
+      });
+    }
+
     render();
 
     // marcamos como leídos todos los mensajes que me mandaron a mí y todavía no había abierto
@@ -485,7 +500,12 @@
   }
 </script>
 <script>
-  let favoritosStickers = new Set(['🔥','❤️']); // un par ya marcados de ejemplo
+  let favoritosStickers = new Set();
+  async function cargarFavoritosStickers(){
+    if(!window.sbChat || !window.miIdChat) return;
+    const { data } = await window.sbChat.from('sticker_favorites').select('sticker_emoji').eq('user_id', window.miIdChat);
+    (data || []).forEach(f => favoritosStickers.add(f.sticker_emoji));
+  }
   let respondiendoA = null;
 
   let mensajes = [];
@@ -528,9 +548,7 @@
         </div>`;
         fila.querySelector('.sticker-en-chat').addEventListener('click', (e) => {
           e.stopPropagation();
-          const emoji = m.texto;
-          if(favoritosStickers.has(emoji)) favoritosStickers.delete(emoji);
-          else favoritosStickers.add(emoji);
+          toggleFavoritoSticker(m.texto);
           render();
         });
       } else if(m.tipo === 'texto'){
@@ -629,8 +647,15 @@
         // doble toque = like directo con ❤️
         const ahora = Date.now();
         if(ahora - ultimoTap < 300){
-          mensajes[+fila.dataset.idx].reaccion = '❤️';
+          const msj = mensajes[+fila.dataset.idx];
+          msj.reaccion = '❤️';
           render();
+          if(msj.id && window.sbChat && window.miIdChat){
+            window.sbChat.from('message_reactions').upsert(
+              { message_id: msj.id, user_id: window.miIdChat, emoji: '❤️' },
+              { onConflict: 'message_id,user_id' }
+            );
+          }
         }
         ultimoTap = ahora;
       }, {passive:true});
@@ -660,10 +685,18 @@
   });
 
   document.querySelectorAll('.opcion-reaccion').forEach(op => {
-    op.addEventListener('click', () => {
+    op.addEventListener('click', async () => {
       if(idxSeleccionado !== null){
-        mensajes[idxSeleccionado].reaccion = op.dataset.reaccion;
+        const msj = mensajes[idxSeleccionado];
+        msj.reaccion = op.dataset.reaccion;
         render();
+
+        if(msj.id && window.sbChat && window.miIdChat){
+          await window.sbChat.from('message_reactions').upsert(
+            { message_id: msj.id, user_id: window.miIdChat, emoji: op.dataset.reaccion },
+            { onConflict: 'message_id,user_id' }
+          );
+        }
       }
       overlayReaccion.classList.remove('activo');
       menuReacciones.classList.remove('activo');
@@ -967,12 +1000,24 @@
     contenidoPanel.querySelectorAll('.btn-fav-sticker').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const id = btn.dataset.fav;
-        if(favoritosStickers.has(id)) favoritosStickers.delete(id);
-        else favoritosStickers.add(id);
+        toggleFavoritoSticker(btn.dataset.fav);
         pintarStickers(tabActiva === 'favoritos');
       });
     });
+  }
+
+  function toggleFavoritoSticker(emoji){
+    if(favoritosStickers.has(emoji)){
+      favoritosStickers.delete(emoji);
+      if(window.sbChat && window.miIdChat){
+        window.sbChat.from('sticker_favorites').delete().eq('user_id', window.miIdChat).eq('sticker_emoji', emoji);
+      }
+    } else {
+      favoritosStickers.add(emoji);
+      if(window.sbChat && window.miIdChat){
+        window.sbChat.from('sticker_favorites').insert({ user_id: window.miIdChat, sticker_emoji: emoji });
+      }
+    }
   }
 
   function pintarPanel(){
