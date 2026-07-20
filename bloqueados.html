@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Sordos Argentinos — Bloqueados</title>
+<style>
+  :root{
+    --violeta-bg:#050014; --magenta:#ff2ec4; --cian:#17f2ff;
+    --texto:#f4e9ff; --texto-dim:#b79ad1; --error:#ff5470;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ width:100%; height:100%; overflow:hidden; overscroll-behavior:none; background:var(--violeta-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+
+  #app{ position:fixed; inset:0; width:100vw; height:100dvh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+    padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+    overflow:hidden; background:var(--violeta-bg);
+  }
+  .fondo-aurora{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 0%, #7209b7 20%, transparent 40%, #4361ee 60%, transparent 80%, var(--cian) 100%);
+    background-size:300% 300%; opacity:.2; animation:auroraMove 9s ease-in-out infinite; }
+  @keyframes auroraMove{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .fondo-aurora{ animation:none; } }
+
+  .pantalla{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column;
+    overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+
+  .header{ display:flex; align-items:center; gap:6px; padding:10px 8px; flex-shrink:0; }
+  .btn-atras{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.05); }
+  .btn-atras:active{ background:rgba(255,255,255,.12); }
+  .btn-atras svg{ width:20px; height:20px; }
+  .header h2{ font-size:18px; font-weight:800; color:var(--texto); }
+
+  .contenido{ flex:1; padding:6px 20px 40px; }
+  .subt{ font-size:12.5px; color:var(--texto-dim); line-height:1.5; margin:6px 0 16px; }
+
+  .grupo{ border-radius:16px; overflow:hidden; background:rgba(255,255,255,.04); }
+  .item{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.05); }
+  .item:last-child{ border-bottom:none; }
+  .avatar{ width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#7209b7,#4361ee,var(--cian));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:15px; flex-shrink:0; opacity:.7; }
+  .item .texto{ flex:1; min-width:0; }
+  .item .nombre{ font-size:14.5px; font-weight:700; color:var(--texto); position:relative; display:inline-block; }
+  .item .nombre span::before, .item .nombre span::after{
+    content:attr(data-txt); position:absolute; left:0; top:0; width:100%; }
+  .item .nombre span::before{ color:var(--magenta); clip-path:inset(0 0 55% 0); animation:glitchA 1.7s infinite steps(1); }
+  .item .nombre span::after{ color:var(--cian); clip-path:inset(55% 0 0 0); animation:glitchB 1.7s infinite steps(1); }
+  @keyframes glitchA{
+    0%, 78%, 100%{ transform:translate(0,0); opacity:0; }
+    80%{ transform:translate(-2px,0); opacity:.9; } 84%{ transform:translate(1.5px,0); opacity:.9; }
+    88%{ transform:translate(-1.5px,0); opacity:.9; } 92%{ transform:translate(0,0); opacity:0; }
+  }
+  @keyframes glitchB{
+    0%, 78%, 100%{ transform:translate(0,0); opacity:0; }
+    80%{ transform:translate(2px,0); opacity:.9; } 84%{ transform:translate(-1.5px,0); opacity:.9; }
+    88%{ transform:translate(1.5px,0); opacity:.9; } 92%{ transform:translate(0,0); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .item .nombre span::before, .item .nombre span::after{ animation:none; }
+  }
+  .item .fecha{ margin-top:1px; font-size:11.5px; color:var(--texto-dim); }
+  .btn-desbloquear{ min-height:36px; padding:0 14px; border-radius:18px; border:1.5px solid rgba(255,255,255,.15);
+    background:transparent; color:var(--cian); font-size:12.5px; font-weight:700; flex-shrink:0; }
+  .btn-desbloquear:active{ background:rgba(23,242,255,.1); }
+
+  .vacio{ margin-top:60px; text-align:center; }
+  .vacio .icono{ width:64px; height:64px; margin:0 auto; border-radius:50%; background:rgba(255,255,255,.05);
+    display:flex; align-items:center; justify-content:center; }
+  .vacio .icono svg{ width:28px; height:28px; color:var(--texto-dim); }
+  .vacio p{ margin-top:16px; font-size:13.5px; color:var(--texto-dim); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="fondo-aurora"></div>
+
+  <div class="pantalla">
+    <div class="header">
+      <div class="btn-atras" id="btnAtras">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f4e9ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </div>
+      <h2>Usuarios bloqueados</h2>
+    </div>
+
+    <div class="contenido">
+      <div class="subt" id="subt">Estas personas no pueden escribirte, llamarte, ni ver tu perfil.</div>
+      <div class="grupo" id="listaBloqueados"></div>
+      <div class="vacio" id="estadoVacio" style="display:none;">
+        <div class="icono">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+        </div>
+        <p>No tenés a nadie bloqueado.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  let bloqueados = [];
+  let sb = null, miId = null;
+
+  function cargarScriptConFallback(urls, callback){
+    let i = 0;
+    function intentar(){
+      if(i >= urls.length){ callback(false); return; }
+      const s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = () => callback(true);
+      s.onerror = () => { i++; intentar(); };
+      document.head.appendChild(s);
+    }
+    intentar();
+  }
+
+  function avisarBannerBloq(texto){
+    let b = document.getElementById('bannerDiagnosticoBloq');
+    if(!b){
+      b = document.createElement('div');
+      b.id = 'bannerDiagnosticoBloq';
+      b.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#ff2d3f; color:#fff; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; font-size:12.5px; font-family:sans-serif; text-align:center; line-height:1.5;';
+      document.body.prepend(b);
+    }
+    b.textContent = texto;
+  }
+
+  const lista = document.getElementById('listaBloqueados');
+  const estadoVacio = document.getElementById('estadoVacio');
+  const subt = document.getElementById('subt');
+
+  function render(){
+    lista.innerHTML = '';
+    if(bloqueados.length === 0){
+      lista.style.display = 'none';
+      estadoVacio.style.display = 'block';
+      subt.style.display = 'none';
+      return;
+    }
+    lista.style.display = 'block';
+    estadoVacio.style.display = 'none';
+    subt.style.display = 'block';
+
+    bloqueados.forEach((u) => {
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.innerHTML = `
+        <div class="avatar">${u.nombre[0].toUpperCase()}</div>
+        <div class="texto"><div class="nombre"><span data-txt="@${u.nombre}">@${u.nombre}</span></div><div class="fecha">${u.fecha}</div></div>
+        <button class="btn-desbloquear" data-rowid="${u.rowId}">Desbloquear</button>
+      `;
+      lista.appendChild(item);
+    });
+  }
+
+  lista.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-desbloquear');
+    if(!btn || !sb) return;
+    const rowId = btn.dataset.rowid;
+    btn.disabled = true;
+    btn.textContent = '...';
+    const { error } = await sb.from('contacts').delete().eq('id', rowId);
+    if(error){
+      avisarBannerBloq('Error desbloqueando: ' + error.message);
+      return;
+    }
+    bloqueados = bloqueados.filter(u => u.rowId !== rowId);
+    render();
+  });
+
+  document.getElementById('btnAtras').addEventListener('click', () => { window.location.href = 'privacidad.html'; });
+
+  cargarScriptConFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ], async (exito) => {
+    if(!exito || typeof supabase === 'undefined'){
+      avisarBannerBloq('⚠️ No se pudo cargar la conexión a Supabase.');
+      return;
+    }
+    sb = supabase.createClient(
+      'https://slidcibxmsfhssbdihou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
+    );
+    const { data: sesionData } = await sb.auth.getSession();
+    if(!sesionData.session){
+      avisarBannerBloq('⚠️ Necesitás iniciar sesión primero. Te llevamos al login...');
+      setTimeout(() => window.location.href = 'login.html', 1500);
+      return;
+    }
+    miId = sesionData.session.user.id;
+
+    const { data, error } = await sb
+      .from('contacts')
+      .select('id, user_id, contact_id, created_at, perfil_user:user_id(id,name), perfil_contact:contact_id(id,name)')
+      .eq('status', 'blocked')
+      .eq('user_id', miId);
+
+    if(error){
+      avisarBannerBloq('Error cargando bloqueados: ' + error.message);
+      return;
+    }
+
+    bloqueados = (data || []).map(fila => ({
+      rowId: fila.id,
+      nombre: fila.perfil_contact ? fila.perfil_contact.name : '???',
+      fecha: 'Bloqueado el ' + new Date(fila.created_at).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' })
+    }));
+
+    render();
+  });
+
+  let startX = 0;
+  document.getElementById('app').addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+  document.getElementById('app').addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if(startX < 24 && dx > 60){ console.log('volver por swipe'); }
+  }, {passive:true});
+</script>
+</body>
+</html>

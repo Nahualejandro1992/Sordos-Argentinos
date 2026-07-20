@@ -150,6 +150,8 @@
   const params = new URLSearchParams(window.location.search);
   const idContacto = params.get('id') || params.get('with');
 
+  let sb = null, miId = null;
+
   async function iniciar(){
     if(!idContacto){
       console.warn('Falta el parámetro ?id= en la URL, se muestran datos de ejemplo.');
@@ -157,10 +159,13 @@
     }
     if(typeof supabase === 'undefined') return;
 
-    const sb = supabase.createClient(
+    sb = supabase.createClient(
       'https://slidcibxmsfhssbdihou.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaWRjaWJ4bXNmaHNzYmRpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzIyMDksImV4cCI6MjA5OTU0ODIwOX0.n0Glud1XevxP1BChN7r4lc49lqDa9WJxH6RI32HhLnI'
     );
+
+    const { data: sesionData } = await sb.auth.getSession();
+    if(sesionData.session) miId = sesionData.session.user.id;
 
     const { data: perfil, error } = await sb.from('profiles').select('name, bio, avatar_url, status').eq('id', idContacto).single();
     if(error || !perfil){
@@ -200,7 +205,26 @@
   document.getElementById('irDocumentos').addEventListener('click', () => console.log('ver documentos compartidos'));
   document.getElementById('irMensajesGuardados').addEventListener('click', () => console.log('ver mensajes guardados de este chat'));
   document.getElementById('btnReportar').addEventListener('click', () => console.log('reportar'));
-  document.getElementById('btnBloquear').addEventListener('click', () => console.log('bloquear'));
+  document.getElementById('btnBloquear').addEventListener('click', async () => {
+    if(!sb || !miId || !idContacto) return;
+    const confirmar = window.confirm('¿Bloquear a este usuario? No va a poder escribirte ni verte.');
+    if(!confirmar) return;
+
+    // buscamos si ya existe una fila de contacto entre los dos, en cualquier dirección
+    const { data: existente } = await sb
+      .from('contacts')
+      .select('id, user_id, contact_id')
+      .or(`and(user_id.eq.${miId},contact_id.eq.${idContacto}),and(user_id.eq.${idContacto},contact_id.eq.${miId})`)
+      .maybeSingle();
+
+    if(existente){
+      await sb.from('contacts').update({ user_id: miId, contact_id: idContacto, status: 'blocked' }).eq('id', existente.id);
+    } else {
+      await sb.from('contacts').insert({ user_id: miId, contact_id: idContacto, status: 'blocked' });
+    }
+    alert('Usuario bloqueado.');
+    window.location.href = 'chats-lista.html';
+  });
 </script>
 </body>
 </html>
